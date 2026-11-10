@@ -57,6 +57,10 @@ Designed by Steph Simorka. Built on [hundekraft](https://hundekraft.github.io/op
 
 Not affiliated with or endorsed by teenage engineering, hundekraft or Befaco.
 
+## Support
+
+Duck Call is free and made for fun. If you enjoy it, you can [buy me a coffee on Ko-fi](https://ko-fi.com/stephsimorka).
+
 ## License
 
 GPL-3.0-or-later with the OP-1 firmware permission, the same terms as hundekraft's kennel. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
