@@ -3,116 +3,390 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Duck Call: OP-1 filter</title>
-<meta name="description" content="Duck Call is a sidechain, gate and choke effect for the OP-1 on hundekraft, with a carnival duck-shoot screen. Play the demo, then put it on your OP-1.">
+<meta name="theme-color" content="#0b0b0c">
+<title>Duck Call · OP-1 filter</title>
+<meta name="description" content="Duck Call is a sidechain, gate and choke effect for the original OP-1 on hundekraft, with a carnival duck-shoot screen. Play the demo, then put it on your OP-1.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23FF3A5D' stroke-width='2.5'/%3E%3Cpath d='M16 3v7M16 22v7M3 16h7M22 16h7' stroke='%23FF3A5D' stroke-width='2.5'/%3E%3C/svg%3E">
 <style>
-  :root { --bg:#000; --panel:#0c0c10; --line:#24233a; --text:#ECECEE; --muted:#8B8B96; --ind:#383572;
+  :root { --bg:#0b0b0c; --bg2:#121214; --band:#18181b; --card:#141416; --line:#26262b; --line2:#33333a;
+          --text:#e9e9ec; --dim:#a7a7b0; --muted:#6f6f78; --ind:#383572;
           --blue:#698EFF; --green:#00ED95; --white:#FFFFFF; --red:#FF3A5D; --gr:#6F7173; --grl:#A3A5A8;
-          --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+          --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+          --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
   * { box-sizing:border-box; }
-  html { background:var(--bg); }
-  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system, system-ui, "Segoe UI", sans-serif; }
-  a { color:var(--text); text-underline-offset:3px; }
-  main { max-width:1000px; margin:0 auto; padding:28px 20px 64px; }
-  nav { display:flex; gap:18px; align-items:center; font:12px var(--mono); text-transform:uppercase; letter-spacing:.08em; margin-bottom:28px; }
-  nav a { color:var(--muted); text-decoration:none; } nav a:hover, nav a.on { color:var(--text); }
-  nav .sp { flex:1; }
-  header.hero { display:flex; flex-wrap:wrap; gap:16px; align-items:end; justify-content:space-between; margin-bottom:18px; }
-  h1 { font:600 34px/1.05 var(--mono); letter-spacing:.02em; margin:0; text-transform:uppercase;
-       color:var(--grl); text-shadow:2px 2px 0 var(--ind); }
-  .tag { font:12px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-top:8px; }
-  .lede { color:var(--muted); max-width:640px; margin:0 0 20px; }
-  .dl { display:inline-flex; gap:10px; align-items:center; background:var(--red); color:#000; font:600 13px var(--mono);
-        text-transform:uppercase; letter-spacing:.06em; padding:11px 18px; border-radius:8px; text-decoration:none; }
-  .dl:hover { filter:brightness(1.08); }
-  .screen { background:#000; border-radius:14px; padding:12px; border:1.5px solid var(--grl); }
-  canvas { display:block; width:100%; }
-  #scr { aspect-ratio:2/1; border-radius:6px; }
-  .bar { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:14px 0 6px; }
-  button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 14px;
-           font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; cursor:pointer; }
-  button:hover { border-color:var(--gr); }
-  button.primary { background:var(--text); color:#000; border-color:var(--text); }
-  label.t { display:flex; gap:8px; align-items:center; color:var(--muted); font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
-  h2 { font:600 13px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--grl); margin:36px 0 12px; }
-  .genres { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-  .genres button { padding:6px 10px; font-size:11px; color:var(--muted); }
-  .genres button.on { color:#000; background:var(--blue); border-color:var(--blue); }
-  .drums { background:#000; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
-  #grid { cursor:pointer; }
-  .gmeta { display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; font:11px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:8px; }
-  .knobs { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-top:12px; }
-  .k { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; border-top:3px solid var(--c); }
-  .k .row { display:flex; justify-content:space-between; font:12px var(--mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  html { background:var(--bg); scroll-behavior:smooth; scroll-padding-top:64px; }
+  body { margin:0; background:var(--bg); color:var(--text); font:300 15px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  a { color:inherit; }
+  .wrap { max-width:1060px; margin:0 auto; padding:0 28px; }
+  .mono { font-family:var(--mono); }
+  .lab { font:400 10.5px/1.4 var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+  b, strong { font-weight:500; color:var(--text); }
+  code { font:12.5px var(--mono); color:var(--text); }
+
+  /* top line + nav */
+  .topline { border-bottom:1px solid var(--line); }
+  .topline .wrap { height:24px; display:flex; align-items:center; gap:8px; }
+  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+  nav.main { position:sticky; top:0; z-index:10; background:rgba(11,11,12,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  nav.main .wrap { height:46px; display:flex; align-items:center; gap:22px; }
+  .logo { display:flex; align-items:center; gap:10px; text-decoration:none; font:300 22px var(--sans); letter-spacing:.02em; }
+  .logo svg { width:26px; height:26px; }
+  .logo span b { color:var(--red); font-weight:400; }
+  nav.main .links { margin-left:auto; display:flex; gap:18px; align-items:center; }
+  nav.main .links a { font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); text-decoration:none; }
+  nav.main .links a:hover { color:var(--text); }
+  nav.main .links a i { font-style:normal; color:var(--blue); margin-right:4px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line2); color:var(--dim); background:transparent;
+         font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.12em; padding:10px 14px; text-decoration:none; cursor:pointer; border-radius:2px; }
+  .btn:hover { color:var(--text); border-color:var(--muted); }
+  .btn.red { border-color:var(--red); color:var(--red); }
+  .btn.red:hover { background:rgba(255,58,93,.08); }
+  nav.main .btn { padding:6px 10px; }
+
+  /* hero */
+  .hero { padding:72px 0 64px; }
+  .hero .wrap { display:grid; grid-template-columns: 1fr 1.08fr; gap:56px; align-items:center; }
+  .kicker { display:flex; align-items:center; gap:6px; margin-bottom:14px; }
+  .kicker .lab { margin-left:6px; }
+  h1 { font:200 58px/1.02 var(--sans); letter-spacing:-.02em; margin:0 0 22px; }
+  h1 em { font-style:normal; font-weight:500; color:var(--red); }
+  .hero p { color:var(--dim); max-width:430px; margin:0 0 26px; font-size:16px; }
+  .hero .ctas { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
+  .status { display:flex; align-items:center; gap:8px; }
+  .status a { color:var(--dim); }
+  .bezel { background:#000; border:1.5px solid #2c2c31; border-radius:16px; padding:14px; box-shadow:0 30px 60px rgba(0,0,0,.5), inset 0 0 0 4px #0a0a0b; }
+  .bezel img, .bezel canvas { display:block; width:100%; border-radius:6px; aspect-ratio:2/1; }
+  .caps { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; margin-top:14px; font-size:12.5px; color:var(--dim); }
+  .caps .lab { margin-bottom:2px; }
+  .key { display:inline-block; font:500 9.5px var(--mono); color:#000; padding:1px 5px; border-radius:2px; margin-right:3px; }
+  .car { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .car button { width:24px; height:24px; border-radius:50%; border:1px solid var(--line2); background:transparent; color:var(--dim); cursor:pointer; font:12px var(--mono); }
+  .car button:hover { color:var(--text); border-color:var(--muted); }
+  .pips { display:flex; gap:6px; }
+  .pips i { width:6px; height:6px; border-radius:50%; background:var(--line2); cursor:pointer; }
+  .pips i.on { background:var(--red); }
+
+  /* stats band */
+  .band { background:var(--band); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:26px 0 22px; }
+  .band .wrap { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+  .band .n { font:200 34px/1.1 var(--sans); }
+  .band .lab { margin-top:6px; max-width:200px; }
+
+  /* contents */
+  .contents { padding:46px 0 40px; border-bottom:1px solid var(--line); }
+  .contents .cols { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:16px; }
+  .toc h4 { margin:0 0 8px; font:400 14px var(--sans); display:flex; gap:14px; }
+  .toc h4 i, .toc li i { font:400 10px var(--mono); color:var(--blue); font-style:normal; width:22px; display:inline-block; }
+  .toc ul { list-style:none; margin:0 0 22px; padding:0; }
+  .toc li { font-size:12.5px; color:var(--dim); line-height:1.75; }
+  .toc li i { color:var(--muted); }
+  .toc a { text-decoration:none; } .toc a:hover { color:var(--text); }
+
+  /* sections */
+  section.s { padding:84px 0 20px; border-bottom:1px solid var(--line); }
+  .shead { display:grid; grid-template-columns:58px 1fr; gap:0; margin-bottom:46px; max-width:640px; }
+  .shead .num { font:100 64px/0.8 var(--sans); color:var(--muted); }
+  .shead h2 { font:300 32px/1.15 var(--sans); margin:0 0 12px; letter-spacing:-.01em; }
+  .shead p { color:var(--dim); margin:0; }
+  .sub { display:grid; grid-template-columns:1fr 1.15fr; gap:48px; align-items:center; margin-bottom:72px; }
+  .sub.top { align-items:start; }
+  .sub h3 { font:400 15px var(--sans); margin:0 0 10px; display:flex; align-items:baseline; gap:10px; }
+  .sub h3 i { font:400 10px var(--mono); color:var(--muted); font-style:normal; }
+  .sub p { color:var(--dim); margin:0 0 12px; font-size:14px; }
+  .sub p.note { font-size:12px; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:14px 16px; }
+  .card .chead { display:flex; justify-content:space-between; margin:-2px 0 12px; }
+  .card img { display:block; width:100%; border-radius:3px; }
+  .card.img { padding:10px; }
+  .card.img .chead { margin:2px 6px 10px; }
+  table.t { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.t td, table.t th { padding:7px 4px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; color:var(--dim); }
+  table.t th { font:400 10px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  table.t td:first-child { color:var(--text); white-space:nowrap; }
+  table.t tr:last-child td { border-bottom:0; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { border:1px solid var(--line2); border-radius:20px; padding:3px 10px; font-size:12px; color:var(--dim); }
+  .chip.on { border-color:var(--red); color:var(--red); }
+  .bars .row { display:grid; grid-template-columns:64px 1fr 58px; gap:10px; align-items:center; font-size:12px; margin:8px 0; }
+  .bars .track { height:6px; background:#1d1d21; border-radius:1px; position:relative; }
+  .bars .fill { position:absolute; inset:0 auto 0 0; background:var(--blue); border-radius:1px; }
+  .bars .v { font:10.5px var(--mono); color:var(--muted); text-align:right; }
+  .callout { border-left:2px solid var(--red); padding:4px 0 4px 14px; margin:14px 0; color:var(--dim); font-size:13.5px; }
+  ol.steps { margin:0; padding:0; list-style:none; counter-reset:s; }
+  ol.steps li { counter-increment:s; display:grid; grid-template-columns:28px 1fr; font-size:14px; color:var(--dim); margin:0 0 12px; }
+  ol.steps li::before { content:counter(s); font:400 10.5px/2.1 var(--mono); color:var(--blue); }
+  .ver .row { display:grid; grid-template-columns:90px 1fr; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); color:var(--dim); }
+  .ver .row:last-of-type { border-bottom:0; }
+  .ver .row span:first-child { font:400 10px/2 var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .ver .hash { font:10.5px var(--mono); word-break:break-all; color:var(--muted); }
+  .ver .btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+
+  /* the demo */
+  .demo .bezel { margin-bottom:14px; }
+  .bar { display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin:4px 0 14px; }
+  label.t { display:flex; gap:8px; align-items:center; font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); }
+  #play { min-width:84px; justify-content:center; }
+  .knobs { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .k { background:var(--card); border:1px solid var(--line); border-top:2px solid var(--c); border-radius:3px; padding:10px 12px 12px; }
+  .k .row { display:flex; justify-content:space-between; font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
   .k .row span:first-child { color:var(--c); }
-  .k .v { color:var(--text); font-variant-numeric:tabular-nums; }
+  .k .v { color:var(--text); }
   input[type=range] { width:100%; accent-color:var(--c, var(--grl)); }
-  button.press { margin-top:8px; padding:5px 10px; font-size:11px; }
-  button.press.on { background:var(--c); color:#000; border-color:var(--c); }
-  .notes { color:var(--muted); font-size:14px; line-height:1.65; }
-  .notes b { color:var(--text); font-weight:500; }
-  ol.steps { padding-left:22px; } ol.steps li { margin:6px 0; }
-  code { font:13px var(--mono); background:var(--panel); border:1px solid var(--line); padding:1px 5px; border-radius:4px; }
-  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; }
-  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  button.press { margin-top:8px; padding:5px 9px; font-size:10px; }
+  button.press.on { color:#000; background:var(--c); border-color:var(--c); }
+  .genres { display:flex; flex-wrap:wrap; gap:6px; margin:26px 0 10px; }
+  .genres button { padding:5px 10px; font:400 10px var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--dim); background:transparent; border:1px solid var(--line2); border-radius:20px; cursor:pointer; }
+  .genres button:hover { color:var(--text); }
+  .genres button.on { color:var(--blue); border-color:var(--blue); }
+  .drums { background:#000; border:1px solid var(--line); border-radius:4px; padding:10px 12px; }
+  .drums canvas { display:block; width:100%; cursor:pointer; }
+  .gmeta { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  .dnote { color:var(--dim); font-size:13.5px; margin:14px 0 0; max-width:760px; }
+
+  footer { padding:44px 0 60px; }
+  footer .links { display:flex; flex-wrap:wrap; gap:18px; margin-bottom:18px; }
+  footer .links a { font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); text-decoration:none; }
+  footer p { color:var(--muted); font-size:12.5px; margin:0 0 8px; max-width:720px; }
+  footer .fine { font-size:11px; }
+
+  @media (max-width: 860px) {
+    .hero .wrap, .sub { grid-template-columns:1fr; gap:28px; }
+    .band .wrap, .contents .cols { grid-template-columns:1fr 1fr; }
+    .knobs { grid-template-columns:1fr 1fr; }
+    nav.main .links a:not(.btn) { display:none; }
+    h1 { font-size:44px; }
+  }
 </style>
 </head>
-<body>
-<main>
-  <nav><a href="./" class="on">Duck Call</a><a href="manual.html">Manual</a><span class="sp"></span><a href="https://github.com/ssimorka/duck-call">GitHub</a></nav>
+<body id="top">
+<div class="topline"><div class="wrap"><span class="dot" style="background:var(--red)"></span><span class="lab">for hundekraft 3.2 · original OP-1 · firmware 246</span></div></div>
+<nav class="main"><div class="wrap">
+  <a class="logo" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#FF3A5D" stroke-width="2.2"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8" stroke="#FF3A5D" stroke-width="2.2"/><circle cx="16" cy="16" r="1.6" fill="#FF3A5D"/></svg><span>DUCK <b>CALL</b></span></a>
+  <div class="links">
+    <a href="#how"><i>1</i>How it works</a><a href="#screen"><i>2</i>The screen</a><a href="#controls"><i>3</i>Controls</a><a href="#install"><i>4</i>Install</a><a href="#demo"><i>5</i>Play it</a>
+    <a href="manual.html">Manual</a><a class="btn red" href="duckcall.knl" download>Download</a>
+  </div>
+</div></nav>
 
-  <header class="hero">
-    <div>
-      <h1>Duck Call</h1>
-      <div class="tag">OP-1 filter &middot; sidechain &middot; gate &middot; choke</div>
+<header class="hero"><div class="wrap">
+  <div>
+    <div class="kicker"><span class="dot" style="background:var(--blue)"></span><span class="dot" style="background:var(--green)"></span><span class="dot" style="background:var(--white)"></span><span class="dot" style="background:var(--red)"></span><span class="lab">OP-1 filter · sidechain · gate · choke</span></div>
+    <h1>Step right<br><em>up.</em></h1>
+    <p>Duck Call is an effect for the OP-1. Something hits, and your sound ducks out of the way, or opens up only on the hit. Its screen is a carnival duck shoot: every hit knocks the ducks down.</p>
+    <div class="ctas"><a class="btn red" href="duckcall.knl" download>&#8595; Download duckcall.knl</a><a class="btn" href="#demo">Play the demo</a></div>
+    <div class="status"><span class="dot" style="background:var(--green)"></span><span class="lab">Version 1.0 · 36 KB · <a href="https://github.com/ssimorka/duck-call">source on GitHub</a></span></div>
+  </div>
+  <div>
+    <div class="bezel"><img id="slide" src="img/screen.png" alt="Duck Call's screen on the OP-1"></div>
+    <div class="caps">
+      <div><div class="lab">Screen</div><span id="capS"></span></div>
+      <div><div class="lab">Knobs</div><span id="capK"></span></div>
+      <div><div class="lab">Press</div><span id="capP"></span></div>
     </div>
-    <a class="dl" href="duckcall.knl" download>&#8595; Download for OP-1</a>
-  </header>
-  <p class="lede">Something hits, and your sound ducks out of the way, or opens up only on the hit. Inspired by Befaco's PercAll, built for the OP-1 on hundekraft, and drawn as an early 20th-century carnival duck shoot. Press play, pick a beat, and turn the knobs.</p>
+    <div class="car"><button id="prev" aria-label="Previous screen">&#8249;</button><div class="pips" id="pips"></div><button id="next" aria-label="Next screen">&#8250;</button></div>
+  </div>
+</div></header>
 
-  <div class="screen"><canvas id="scr" width="960" height="480" aria-label="Duck Call's OP-1 screen"></canvas></div>
+<div class="band"><div class="wrap">
+  <div><div class="n">16</div><div class="lab">sources: eight beat divisions, four tape tracks, tape, input, self, inst</div></div>
+  <div><div class="n">4</div><div class="lab">shapes: pump, linear, hold, choke</div></div>
+  <div><div class="n">0.2–100</div><div class="lab">ms of attack, from a hard cut to a slow swell</div></div>
+  <div><div class="n">1</div><div class="lab">file to install, through the hundekraft workshop</div></div>
+</div></div>
 
+<div class="contents"><div class="wrap">
+  <div class="lab">Contents</div>
+  <div class="cols toc">
+    <div>
+      <h4><i>1</i><a href="#how">How it works</a></h4>
+      <ul><li><i>1.1</i><a href="#hits">Something hits</a></li><li><i>1.2</i><a href="#duckgate">Duck, flat or gate</a></li><li><i>1.3</i><a href="#shapes">Four shapes</a></li><li><i>1.4</i><a href="#choke">Choke</a></li><li><i>1.5</i><a href="#percall">From PercAll</a></li></ul>
+      <h4><i>2</i><a href="#screen">The screen</a></h4>
+      <ul><li><i>2.1</i><a href="#ducks">The ducks</a></li><li><i>2.2</i><a href="#sights">The sights</a></li><li><i>2.3</i><a href="#waves">Waves and curtains</a></li></ul>
+    </div>
+    <div>
+      <h4><i>3</i><a href="#controls">Controls</a></h4>
+      <ul><li><i>3.1</i><a href="#knobs">Four knobs</a></li><li><i>3.2</i><a href="#page2">Page 2</a></li><li><i>3.3</i><a href="#recipes">Recipes</a></li></ul>
+      <h4><i>4</i><a href="#install">Install</a></h4>
+      <ul><li><i>4.1</i><a href="#steps">Five steps</a></li><li><i>4.2</i><a href="#version">Current version</a></li><li><i>4.3</i><a href="#build">Build it yourself</a></li></ul>
+    </div>
+    <div>
+      <h4><i>5</i><a href="#demo">Play it</a></h4>
+      <ul><li><i>5.1</i><a href="#demo">The demo</a></li><li><i>5.2</i><a href="#rhythm">Rhythm Machine</a></li></ul>
+      <h4><i>&#8594;</i><a href="manual.html">The manual</a></h4>
+      <ul><li>Every control, the screen, tips and tricks</li></ul>
+    </div>
+  </div>
+</div></div>
+
+<section class="s" id="how"><div class="wrap">
+  <div class="shead"><div class="num">1</div><div><h2>How it works</h2><p>Duck Call listens for hits and moves your sound's level with each one. It sits in any FX slot on a synth, the drums or the master, and runs in stereo.</p></div></div>
+
+  <div class="sub" id="hits">
+    <div><h3><i>1.1</i>Something hits</h3>
+      <p>The red knob picks what makes the hits. The first eight are the beat grid, which follows the tape while it plays and keeps the OP-1 tempo when it doesn't, so playing keys pumps too.</p>
+      <p>The rest listen to audio: a tape track, all of tape, the input, or the sound itself. Each hit's loudness sets how deep and how long its dip is, like a drum struck harder.</p></div>
+    <div class="card"><div class="chead"><span class="lab">Red · source</span><span class="lab">16</span></div>
+      <table class="t"><tr><th>Group</th><th>Sources</th></tr>
+        <tr><td>Beat grid</td><td>1/1 · 1/2 · 1/4 · 1/8 · 1/16 · 1/4T · 1/8T · 1/16T</td></tr>
+        <tr><td>Tape tracks</td><td>T1 · T2 · T3 · T4</td></tr>
+        <tr><td>Audio</td><td>TAPE (all four) · IN (mic or line) · SELF · INST (master)</td></tr></table></div>
+  </div>
+
+  <div class="sub" id="duckgate">
+    <div><h3><i>1.2</i>Duck, flat or gate</h3>
+      <p>Flip, on white's page 2, sets what a hit does. <b>Duck</b> drops the level on each hit, the classic sidechain pump. <b>Gate</b> keeps the sound silent until a hit opens it. <b>Flat</b> in the middle does nothing, so sweeping through it fades one into the other.</p>
+      <p>Strength, on green, sets how deep. It gets deep from the middle of the knob up, and 100% goes to silence.</p></div>
+    <div class="card bars"><div class="chead"><span class="lab">Deepest dip by strength · duck on 1/4</span></div>
+      <div class="row"><span>50%</span><span class="track"><span class="fill" style="width:78%"></span></span><span class="v">to 22%</span></div>
+      <div class="row"><span>66%</span><span class="track"><span class="fill" style="width:90%"></span></span><span class="v">to 10%</span></div>
+      <div class="row"><span>100%</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">silence</span></div>
+      <p class="note" style="margin:10px 0 0">The bar is how far the level drops on a full hit. Measured on a steady tone in Duck Call's own code.</p></div>
+  </div>
+
+  <div class="sub" id="shapes">
+    <div><h3><i>1.3</i>Four shapes</h3>
+      <p>White picks the curve the level follows after a hit, and the curtains draw it. <b>Pump</b> springs right back. <b>Linear</b> ramps. <b>Hold</b> stays down, then swells, the big breathing pump. <b>Choke</b> stays down almost to the end, then snaps open.</p>
+      <p>Attack, on blue's page 2, rounds every corner, from 0.2 ms to 100 ms.</p></div>
+    <div class="card img"><div class="chead"><span class="lab">The curtains · pump, linear, hold, choke</span></div><img src="img/shapes.png" alt="The curtains for each of the four shapes"></div>
+  </div>
+
+  <div class="sub" id="choke">
+    <div><h3><i>1.4</i>Choke</h3>
+      <p>Press red to switch choke on. A hit on the partner track then ends the current dip or gate on the spot. In gate it's the hi-hat trick: T2 opens the sound and a T1 hit slams it shut. In duck, a T1 hit lets the sound pop right back up.</p>
+      <p class="note">The choke switch isn't saved with the sound, and the partner has to be a tape track that's playing back.</p></div>
+    <div class="card"><div class="chead"><span class="lab">Choke pairs</span></div>
+      <div class="chips" style="margin-bottom:12px"><span class="chip on">T1 &#8596; T2</span><span class="chip on">T3 &#8596; T4</span><span class="chip">everything else &#8592; T1</span></div>
+      <img src="img/gate-choke.png" alt="Gate on T2 with choke on, just after a T1 hit" style="border-radius:3px"></div>
+  </div>
+
+  <div class="sub" id="percall">
+    <div><h3><i>1.5</i>From PercAll</h3>
+      <p>Duck Call takes its ideas from Befaco's PercAll, a Eurorack module of decay envelopes, VCAs and choke switches: a trigger, a decay, a strength that deepens and lengthens each hit, and choke. Then it adds what the OP-1 makes possible.</p></div>
+    <div class="card"><table class="t"><tr><th>PercAll</th><th>Duck Call</th></tr>
+      <tr><td>Trigger input</td><td>16 sources, from the beat grid to the input</td></tr>
+      <tr><td>Decay</td><td>Length, 15 ms to 2 s</td></tr>
+      <tr><td>Strength CV</td><td>Strength, plus each hit's own loudness</td></tr>
+      <tr><td>Choke switches</td><td>Red's press, with track pairs</td></tr>
+      <tr><td>&#8212;</td><td>Gate, four shapes, attack, accent, sensitivity, the screen</td></tr></table></div>
+  </div>
+</div></section>
+
+<section class="s" id="screen"><div class="wrap">
+  <div class="shead"><div class="num">2</div><div><h2>The screen</h2><p>An early 20th-century carnival duck shoot, drawn in the OP-1's own colors. Every part of the scene is tied to a knob, so you can read the whole effect at a glance. In silence it holds still.</p></div></div>
+
+  <div class="sub" id="ducks">
+    <div><h3><i>2.1</i>The ducks</h3>
+      <p>Each hit knocks ducks down for as long as the dip lasts. The 1 of the bar takes the back pair, other hits take turns along the front row, and green ricochet dashes fly off each one. A down duck turns indigo and sinks.</p>
+      <p>Standing ducks wobble on every hit and duck their heads on a miss. The rifle fires a red flash on each hit, bigger on the 1, and the marquee bulbs chase along.</p></div>
+    <div class="card img"><div class="chead"><span class="lab">1/16 · full strength · choke shape</span></div><img src="img/full-strength-1-16.png" alt="Duck at full strength on 1/16, most ducks down"></div>
+  </div>
+
+  <div class="sub" id="sights">
+    <div><h3><i>2.2</i>The sights</h3>
+      <p>The red sight changes with the source. Beat sources get a ring with a tick per pulse in the bar, and the tick that just fired lights white. Tracks get corner ticks for their number. Tape has spokes, the input is a peak, and SELF is a small mic.</p></div>
+    <div class="card img"><div class="chead"><span class="lab">Sights · 1/4 to SELF</span></div><img src="img/sights.png" alt="The sights for eight sources"></div>
+  </div>
+
+  <div class="sub" id="waves">
+    <div><h3><i>2.3</i>Waves and curtains</h3>
+      <p>The blue waves are attack: sharp and choppy when it's short, rounded swells when it's long. They roll faster with a shorter length. The white curtains are the shape, and the rifle aims with flip: left for gate, center for flat, right for duck.</p></div>
+    <div class="card img"><div class="chead"><span class="lab">Attack · 0.2 ms and 100 ms</span></div><img src="img/attack-waves.png" alt="The waves at the shortest and longest attack"></div>
+  </div>
+</div></section>
+
+<section class="s" id="controls"><div class="wrap">
+  <div class="shead"><div class="num">3</div><div><h2>Controls</h2><p>Four knobs, in the OP-1's colors. Push blue, green or white for a second page, and push red for choke. Everything but the choke switch is saved with the sound.</p></div></div>
+
+  <div class="sub top" id="knobs">
+    <div><h3><i>3.1</i>Four knobs</h3>
+      <p>The screen shows the real values, so green's label reads the actual depth, not the knob position. White and red snap to their steps.</p></div>
+    <div class="card"><table class="t"><tr><th>Knob</th><th>Turn</th><th>Press</th></tr>
+      <tr><td style="color:var(--blue)">Blue</td><td>Length · 15 ms to 2 s</td><td>Attack · 0.2 to 100 ms</td></tr>
+      <tr><td style="color:var(--green)">Green</td><td>Strength · 12 to 100% deep</td><td>Accent (beat) or sensitivity (audio)</td></tr>
+      <tr><td>White</td><td>Shape · pump, linear, hold, choke</td><td>Flip · duck, flat, gate</td></tr>
+      <tr><td style="color:var(--red)">Red</td><td>Source · 16</td><td>Choke on or off</td></tr></table></div>
+  </div>
+
+  <div class="sub" id="page2">
+    <div><h3><i>3.2</i>Page 2</h3>
+      <p>A knob on its second page gets a ring inside it, and its value moves onto a chip of the knob's color.</p>
+      <p><b>Accent</b> softens every hit but the 1: at 100% only the 1 is left. <b>Sensitivity</b> sets how loud a hit must be to count, and quieter ones become misses.</p></div>
+    <div class="card img"><div class="chead"><span class="lab">Every knob on page 2</span></div><img src="img/page2.png" alt="Every knob on page 2, with rings and colored chips"></div>
+  </div>
+
+  <div class="sub top" id="recipes">
+    <div><h3><i>3.3</i>Recipes</h3>
+      <p>Starting points. More in the <a href="manual.html#recipes">manual</a>.</p>
+      <div class="callout">Duck shines on long sounds: pads, chords, bass. On drums the dip lands right on the hit, so you mostly hear them get quieter.</div></div>
+    <div class="card"><table class="t"><tr><th>Recipe</th><th>Settings</th></tr>
+      <tr><td>Classic pump</td><td>Pad · 1/4 · 350 ms · 70% · hold · attack 20 ms</td></tr>
+      <tr><td>Kick pump</td><td>Bass · T1 · 200 ms · 90% · hold</td></tr>
+      <tr><td>Trance gate</td><td>Pad · 1/16 · 80 ms · 100% · choke · gate</td></tr>
+      <tr><td>Hi-hat choke</td><td>T2 · 1 s · 100% · hold · gate · choke on</td></tr>
+      <tr><td>Self swell</td><td>Lead · SELF · 400 ms · linear · attack 100 ms</td></tr></table></div>
+  </div>
+</div></section>
+
+<section class="s" id="install"><div class="wrap">
+  <div class="shead"><div class="num">4</div><div><h2>Install</h2><p>Duck Call is one file. It needs an original OP-1 running hundekraft 3.2 or later, and installs through the hundekraft workshop in Chrome.</p></div></div>
+
+  <div class="sub top" id="steps">
+    <div><h3><i>4.1</i>Five steps</h3>
+      <ol class="steps">
+        <li><span>Download <a href="duckcall.knl" download><code>duckcall.knl</code></a>.</span></li>
+        <li><span>Open the <a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a> in Chrome.</span></li>
+        <li><span>Go to <b>Your plugins</b> and choose <b>Add your plugin files</b>.</span></li>
+        <li><span>Choose <b>Connect my OP-1</b>, then <b>Review changes</b> and <b>Send</b>.</span></li>
+        <li><span>Press <b>T1</b> on the OP-1 when it asks. Duck Call is now in every FX list.</span></li>
+      </ol>
+      <p class="note">To update, add the newer file the same way. Same name, so it replaces the old one, and your sounds keep their settings.</p></div>
+    <div class="card ver" id="version"><div class="chead"><span class="lab">4.2 · Current version</span><span class="lab" style="color:var(--green)">1.0</span></div>
+      <div class="row"><span>File</span><span><code>duckcall.knl</code> · 36,084 bytes</span></div>
+      <div class="row"><span>Needs</span><span>hundekraft 3.2+ on TE firmware 246</span></div>
+      <div class="row"><span>Runs</span><span>Synth, drums or master FX · stereo</span></div>
+      <div class="row"><span>SHA-256</span><span class="hash">562b47a5bc6adddbce84e20143726a75304c1a404040906805f64752c15d9337</span></div>
+      <div class="btns"><a class="btn red" href="duckcall.knl" download>&#8595; Download</a><a class="btn" href="https://hundekraft.github.io/op1-workshop/">Workshop</a><a class="btn" href="https://github.com/ssimorka/duck-call">GitHub</a><a class="btn" href="manual.html">Manual</a></div></div>
+  </div>
+
+  <div class="sub" id="build">
+    <div><h3><i>4.3</i>Build it yourself</h3>
+      <p>The source is on <a href="https://github.com/ssimorka/duck-call">GitHub</a> under GPL-3.0, the same terms as hundekraft. It builds with the hundekraft plugin SDK and a Blackfin GCC toolchain, and the screen art comes from a small generator script.</p></div>
+    <div class="card"><div class="chead"><span class="lab">From hundekraft's ext/kennel</span></div>
+      <code style="display:block;white-space:pre-wrap;color:var(--dim);font-size:12px;line-height:1.7">cp -r duck-call/plugin synth_sdk/plugins/duckcall
+python3 tools/kennel/pack.py \
+  synth_sdk/plugins/duckcall -o duckcall.knl</code></div>
+  </div>
+</div></section>
+
+<section class="s demo" id="demo"><div class="wrap">
+  <div class="shead"><div class="num">5</div><div><h2>Play it</h2><p>The same Duck Call logic, running in your browser with the OP-1 screen. Press play, pick a beat, and turn the knobs. The buttons stand in for pressing an encoder.</p></div></div>
+
+  <div class="bezel"><canvas id="scr" width="960" height="480" aria-label="Duck Call's OP-1 screen, live"></canvas></div>
   <div class="bar">
-    <button id="play" class="primary">Play</button>
+    <button id="play" class="btn red">Play</button>
     <label class="t"><input type="checkbox" id="bypass"> Bypass</label>
-    <label class="t">Tempo <input type="range" id="bpm" min="70" max="180" value="122" step="1" style="width:130px;--c:var(--grl)"> <span id="bpmv">122</span></label>
+    <label class="t">Tempo <input type="range" id="bpm" min="70" max="180" value="122" step="1" style="width:120px;--c:var(--grl)"> <span id="bpmv">122</span></label>
     <label class="t"><input type="checkbox" id="recipe" checked> Load each beat's recipe</label>
   </div>
-
   <div class="knobs">
-    <div class="k" style="--c:var(--blue)"><div class="row"><span id="n0">Blue: length</span><span class="v" id="v0"></span></div><input type="range" id="k0"><button class="press" data-k="0">Press</button></div>
-    <div class="k" style="--c:var(--green)"><div class="row"><span id="n1">Green: strength</span><span class="v" id="v1"></span></div><input type="range" id="k1"><button class="press" data-k="1">Press</button></div>
-    <div class="k" style="--c:var(--white)"><div class="row"><span id="n2">White: shape</span><span class="v" id="v2"></span></div><input type="range" id="k2"><button class="press" data-k="2">Press</button></div>
-    <div class="k" style="--c:var(--red)"><div class="row"><span id="n3">Red: source</span><span class="v" id="v3"></span></div><input type="range" id="k3"><button class="press" id="chk">Press: choke</button></div>
+    <div class="k" style="--c:var(--blue)"><div class="row"><span id="n0">Blue: length</span><span class="v" id="v0"></span></div><input type="range" id="k0"><button class="press btn" data-k="0">Press</button></div>
+    <div class="k" style="--c:var(--green)"><div class="row"><span id="n1">Green: strength</span><span class="v" id="v1"></span></div><input type="range" id="k1"><button class="press btn" data-k="1">Press</button></div>
+    <div class="k" style="--c:var(--white)"><div class="row"><span id="n2">White: shape</span><span class="v" id="v2"></span></div><input type="range" id="k2"><button class="press btn" data-k="2">Press</button></div>
+    <div class="k" style="--c:var(--red)"><div class="row"><span id="n3">Red: source</span><span class="v" id="v3"></span></div><input type="range" id="k3"><button class="press btn" id="chk">Press: choke</button></div>
   </div>
 
-  <h2>Rhythm Machine</h2>
-  <div class="genres" id="genres"></div>
-  <div class="drums"><canvas id="grid" aria-label="Drum pattern, tape tracks T1 to T4"></canvas>
-    <div class="gmeta"><span id="ginfo"></span><span>Click a step to change the beat</span></div>
-  </div>
-  <p class="notes">The beat plays on the OP-1's four tape tracks: <b style="color:var(--blue)">T1</b> kick, <b style="color:var(--green)">T2</b> open hats and cymbals, <b>T3</b> snares and claps, <b style="color:var(--red)">T4</b> closed hats and percussion. Duck Call sits on the pad (the drums stay dry), so set red to a track and the pad answers it. The red crosshair marks the track that triggers, the X marks the track that chokes.</p>
+  <div id="rhythm" class="genres"></div>
+  <div class="drums"><canvas id="grid" aria-label="Drum pattern on tape tracks T1 to T4"></canvas>
+    <div class="gmeta"><span class="lab" id="ginfo"></span><span class="lab">5.2 · Rhythm Machine · click a step to change the beat</span></div></div>
+  <p class="dnote">The beat plays on the OP-1's four tape tracks: <b style="color:var(--blue)">T1</b> kick, <b style="color:var(--green)">T2</b> open hats and cymbals, <b>T3</b> snares and claps, <b style="color:var(--red)">T4</b> closed hats and percussion. Duck Call sits on the pad, and the drums stay dry. The red sight marks the track that triggers, the X the track that chokes. Each beat loads a matching recipe.</p>
+  <div style="height:56px"></div>
+</div></section>
 
-  <h2>Put it on your OP-1</h2>
-  <div class="cols">
-    <div class="notes">
-      <ol class="steps">
-        <li>Your OP-1 needs <a href="https://hundekraft.github.io/op1-workshop/">hundekraft</a> 3.2 or later.</li>
-        <li><a href="duckcall.knl" download>Download <code>duckcall.knl</code></a>.</li>
-        <li>Open the <a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a> in Chrome, go to <b>Your plugins</b> and choose <b>Add your plugin files</b>.</li>
-        <li>Choose <b>Connect my OP-1</b>, then <b>Review changes</b> and <b>Send</b>.</li>
-        <li>Press <b>T1</b> on the OP-1 when it asks. Duck Call is now in the FX list of any synth, the drums or the master.</li>
-      </ol>
-    </div>
-    <div class="notes">
-      <p><b>Blue</b> length, press for attack. <b>Green</b> strength, press for accent or sensitivity. <b>White</b> shape, press for flip (duck, flat, gate). <b>Red</b> source, press for choke.</p>
-      <p>Everything is in the <a href="manual.html">manual</a>, with recipes and tips. Source code, older versions and the screen art are on <a href="https://github.com/ssimorka/duck-call">GitHub</a>.</p>
-    </div>
-  </div>
-
-  <footer>Duck Call by Steph Simorka. Built on the hundekraft plugin SDK, inspired by Befaco PercAll. Free software under GPL-3.0. Not affiliated with teenage engineering, hundekraft or Befaco.</footer>
-</main>
+<footer><div class="wrap">
+  <div class="links"><a href="duckcall.knl" download>Download</a><a href="manual.html">Manual</a><a href="https://github.com/ssimorka/duck-call">GitHub</a><a href="https://github.com/ssimorka/duck-call/releases">Releases</a><a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a></div>
+  <p>Duck Call by Steph Simorka. Built on hundekraft's kennel plugin SDK, inspired by Befaco PercAll. The demo's beats come from Rhythm Machine.</p>
+  <p class="fine">Free software under GPL-3.0-or-later with the OP-1 firmware permission. Not affiliated with or endorsed by teenage engineering, hundekraft or Befaco. OP-1 is a trademark of teenage engineering.</p>
+</div></footer>
 <script>
 (() => {
 'use strict';
@@ -196,7 +470,7 @@ function loadGenre(name){
                   .sort((a, b) => a.tape - b.tape);
   P.bpm = g.bpm; $('bpm').value = g.bpm; $('bpmv').textContent = g.bpm;
   if ($('recipe').checked) applyRecipe(g.recipe);
-  document.querySelectorAll('#genres button').forEach(b => b.classList.toggle('on', b.textContent === name));
+  document.querySelectorAll('#rhythm button').forEach(b => b.classList.toggle('on', b.textContent === name));
   $('ginfo').textContent = name + ' · ' + g.bpm + ' BPM · swing ' + Math.round(g.swing * 100) + '%';
   sizeGrid();
 }
@@ -389,7 +663,7 @@ function drawGrid(){
   if (cur >= 0) { const x = GL.lab + cur * cw + cw / 2; gc.strokeStyle = '#A3A5A8'; gc.lineWidth = 1; gc.beginPath(); gc.moveTo(x, 1); gc.lineTo(x, 4); gc.moveTo(x, gH - 4); gc.lineTo(x, gH - 1); gc.stroke(); }
   requestAnimationFrame(drawGrid);
 }
-GENRE_KEYS.forEach(name => { const b = document.createElement('button'); b.textContent = name; b.addEventListener('click', () => loadGenre(name)); $('genres').appendChild(b); });
+GENRE_KEYS.forEach(name => { const b = document.createElement('button'); b.textContent = name; b.addEventListener('click', () => loadGenre(name)); $('rhythm').appendChild(b); });
 
 function flipText(f){ return f >= 0.99 ? 'duck' : f <= -0.99 ? 'gate' : Math.abs(f) < 0.02 ? 'flat' : (f > 0 ? 'duck ' : 'gate ') + Math.round(Math.abs(f)*100) + '%'; }
 // [page 1, page 2] per knob: name, min, max, step, get, set, text
@@ -578,6 +852,25 @@ function frame(t){
   knob(276,KY,kv[3],R,15,(P.choke?SRC[P.src]+' CUT '+SRC[chokeOf(P.src)]:SRC[P.src]).toUpperCase(),P.choke);
   requestAnimationFrame(frame);
 }
+
+
+// ---------- the hero's screen carousel ----------
+const SLIDES = [
+  { src:'img/screen.png', s:'Duck on 1/4, just after beat 2', k:'<span class="key" style="background:var(--red)">RED</span> 1/4', p:'none' },
+  { src:'img/gate-choke.png', s:'Gate on T2, choked by a T1 hit', k:'<span class="key" style="background:var(--red)">RED</span> T2', p:'<span class="key" style="background:var(--white)">WHITE</span> gate, <span class="key" style="background:var(--red)">RED</span> choke' },
+  { src:'img/full-strength-1-16.png', s:'1/16 at full strength, most ducks down', k:'<span class="key" style="background:var(--green)">GREEN</span> 100%', p:'none' },
+  { src:'img/page2.png', s:'Every knob on page 2', k:'all four', p:'<span class="key" style="background:var(--blue)">BLUE</span> <span class="key" style="background:var(--green)">GREEN</span> <span class="key" style="background:var(--white)">WHITE</span> <span class="key" style="background:var(--red)">RED</span>' },
+];
+let si = 0, sTimer = null;
+SLIDES.forEach((s, i) => { const p = document.createElement('i'); p.addEventListener('click', () => show(i, true)); $('pips').appendChild(p); new Image().src = s.src; });
+function show(i, user){
+  si = (i + SLIDES.length) % SLIDES.length; const s = SLIDES[si];
+  $('slide').src = s.src; $('capS').textContent = s.s; $('capK').innerHTML = s.k; $('capP').innerHTML = s.p;
+  [...$('pips').children].forEach((p, j) => p.classList.toggle('on', j === si));
+  if (user) { clearInterval(sTimer); sTimer = setInterval(() => show(si + 1), 5000); }
+}
+$('prev').addEventListener('click', () => show(si - 1, true)); $('next').addEventListener('click', () => show(si + 1, true));
+show(0, true);
 
 loadGenre('Chicago House');
 requestAnimationFrame(drawGrid);
