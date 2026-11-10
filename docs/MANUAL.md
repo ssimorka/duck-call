@@ -44,6 +44,14 @@ Every part of the scene is tied to a knob, in that knob's color. The scene moves
 
 On white's page 2 (flip), the white arc grows from the top of the knob: left toward gate, right toward duck.
 
+![The four shapes in the curtains](img/shapes.png)
+
+*Fig. 2: the curtains for each shape, left to right: pump, linear, hold, choke. The inner edge is the curve your sound follows after a hit.*
+
+![Waves with a short and a long attack](img/attack-waves.png)
+
+*Fig. 3: the waves with the shortest attack (sharp, choppy peaks) and the longest (rounded swells).*
+
 ## Controls
 
 Push blue, green or white for page 2. Push red to switch choke on. Page 2 settings are saved with the sound. The choke switch is not, so it starts off each time you load the sound.
@@ -62,6 +70,10 @@ Push blue, green or white for page 2. Push red to switch choke on. Page 2 settin
 
 The values shown on screen are the real ones, so green's label reads the actual depth, not the knob position.
 
+![Page 2 on blue, green, white and red](img/page2.png)
+
+*Fig. 4: page 2 on every knob. Each knob gets a ring inside it and its value on a colored chip: attack, accent, flip (at flat, so the rifle aims straight ahead) and choke.*
+
 ## Sources
 
 Red picks what makes the hits. The first eight are the beat grid. The rest listen to audio.
@@ -75,6 +87,10 @@ Red picks what makes the hits. The first eight are the beat grid. The rest liste
 | IN | The audio input (mic or line) | A peak |
 | SELF | The sound the effect is on | A small mic |
 | INST | The instrument under the master FX (master only; elsewhere it acts as SELF) | A mic in a bracket |
+
+![The sights for each kind of source](img/sights.png)
+
+*Fig. 5: the sights. Beat sources show a ring with a tick per pulse (the white tick is the pulse that just fired). Tracks show corner ticks for their number, tape has spokes, the input is a peak and SELF is a small mic.*
 
 **The beat grid** follows the tape while it plays and restarts with it. With the tape stopped it keeps running at the OP-1 tempo, so playing keys pumps on the grid too. Accent (green, page 2) shapes the bar: the 1 always hits at full strength, the beats come next, and the in-betweens are softest.
 
@@ -97,6 +113,10 @@ Flip (white, page 2) sets what a hit does. Shape (white) sets the curve the leve
 
 Attack (blue, page 2) rounds every corner of the curve, both into the dip and back out.
 
+![Duck at full strength on 1/16](img/full-strength-1-16.png)
+
+*Fig. 6: duck at full strength on 1/16 with the choke shape and a long length. Hits come faster than the dips can recover, so most ducks stay down and the ricochets keep flying.*
+
 ## Choke
 
 Push red to switch choke on, the way PercAll's choke switches work. With choke on, a hit on the partner track ends the current dip or gate on the spot.
@@ -115,6 +135,10 @@ Red's chip shows the pair, for example **T2 CUT T1**. When a choke lands, the si
 - **In duck:** a T1 hit lets the sound pop right back up.
 
 The partner has to be a tape track that is playing back. The switch is not saved with the sound.
+
+![Gate with choke on](img/gate-choke.png)
+
+*Fig. 7: gate on T2 with choke on. A T1 hit just landed: the sight is crossed out, the ducks drop, and red's chip reads T2 CUT T1. The rifle aims left for gate.*
 
 ## Recipes
 
