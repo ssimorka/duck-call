@@ -4,7 +4,7 @@
 
 Something hits, and your sound ducks out of the way, or opens up only on the hit. Duck Call is an effect plugin for the [hundekraft](https://hundekraft.github.io/op1-workshop/) firmware, inspired by Befaco's PercAll. Its screen is an early 20th-century carnival duck shoot: every hit knocks rubber ducks down, and the curtains, waves, rifle and sight show your settings.
 
-**[Play the demo](https://ssimorka.github.io/duck-call/)** · **[Read the manual](docs/MANUAL.md)** · **[Download `duckcall.knl`](https://github.com/ssimorka/duck-call/releases/latest/download/duckcall.knl)**
+**[Play the demo](https://ssimorka.github.io/duck-call/)** · **[Read the manual](docs/MANUAL.md)** · **[Download `duckcall.knl`](https://github.com/ssimorka/duck-call/raw/main/duckcall.knl)**
 
 ![Duck Call's screen](docs/img/screen.png)
 
@@ -12,7 +12,7 @@ Something hits, and your sound ducks out of the way, or opens up only on the hit
 
 You need an OP-1 running hundekraft 3.2 or later.
 
-1. Download [`duckcall.knl`](https://github.com/ssimorka/duck-call/releases/latest/download/duckcall.knl) from the latest release.
+1. Download [`duckcall.knl`](https://github.com/ssimorka/duck-call/raw/main/duckcall.knl) (it is also at the top of this repo).
 2. Open the [hundekraft workshop](https://hundekraft.github.io/op1-workshop/) in Chrome.
 3. Go to **Your plugins** and choose **Add your plugin files**. Pick `duckcall.knl`.
 4. Choose **Connect my OP-1**, then **Review changes**, then **Send**.
