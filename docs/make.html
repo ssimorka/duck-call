@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0b0c">
+<title>Duck Call · Build a plugin</title>
+<meta name="description" content="How to make your own OP-1 hundekraft plugin: the SDK, testing on your computer without the emulator, building the .knl and screens.">
+<style>
+  :root { --bg:#0b0b0c; --bg2:#121214; --band:#18181b; --card:#141416; --line:#26262b; --line2:#33333a;
+          --text:#e9e9ec; --dim:#a7a7b0; --muted:#6f6f78; --ind:#383572;
+          --blue:#698EFF; --green:#00ED95; --white:#FFFFFF; --red:#FF3A5D; --gr:#6F7173; --grl:#A3A5A8;
+          --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+          --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); scroll-behavior:smooth; scroll-padding-top:64px; }
+  body { margin:0; background:var(--bg); color:var(--text); font:300 15px/1.65 var(--sans); -webkit-font-smoothing:antialiased; }
+  a { color:inherit; }
+  .wrap { max-width:1060px; margin:0 auto; padding:0 28px; }
+  .mono { font-family:var(--mono); }
+  .lab { font:400 10.5px/1.4 var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+  b, strong { font-weight:500; color:var(--text); }
+  code { font:12.5px var(--mono); color:var(--text); }
+
+  /* top line + nav */
+  .topline { border-bottom:1px solid var(--line); }
+  .topline .wrap { height:24px; display:flex; align-items:center; gap:8px; }
+  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+  nav.main { position:sticky; top:0; z-index:10; background:rgba(11,11,12,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  nav.main .wrap { height:46px; display:flex; align-items:center; gap:22px; }
+  .logo { display:flex; align-items:center; gap:10px; text-decoration:none; font:300 22px var(--sans); letter-spacing:.02em; }
+  .logo svg { width:26px; height:26px; }
+  .logo span b { color:var(--red); font-weight:400; }
+  nav.main .links { margin-left:auto; display:flex; gap:18px; align-items:center; }
+  nav.main .links a { font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); text-decoration:none; }
+  nav.main .links a:hover { color:var(--text); }
+  nav.main .links a i { font-style:normal; color:var(--blue); margin-right:4px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line2); color:var(--dim); background:transparent;
+         font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.12em; padding:10px 14px; text-decoration:none; cursor:pointer; border-radius:2px; }
+  .btn:hover { color:var(--text); border-color:var(--muted); }
+  .btn.red { border-color:var(--red); color:var(--red); }
+  .btn.red:hover { background:rgba(255,58,93,.08); }
+  nav.main .btn { padding:6px 10px; }
+
+  /* hero */
+  .hero { padding:72px 0 64px; }
+  .hero .wrap { display:grid; grid-template-columns: 1fr 1.08fr; gap:56px; align-items:center; }
+  .kicker { display:flex; align-items:center; gap:6px; margin-bottom:14px; }
+  .kicker .lab { margin-left:6px; }
+  h1 { font:200 58px/1.02 var(--sans); letter-spacing:-.02em; margin:0 0 22px; }
+  h1 em { font-style:normal; font-weight:500; color:var(--red); }
+  .hero p { color:var(--dim); max-width:430px; margin:0 0 26px; font-size:16px; }
+  .hero .ctas { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
+  .status { display:flex; align-items:center; gap:8px; }
+  .status a { color:var(--dim); }
+  .bezel { background:#000; border:1.5px solid #2c2c31; border-radius:16px; padding:14px; box-shadow:0 30px 60px rgba(0,0,0,.5), inset 0 0 0 4px #0a0a0b; }
+  .bezel img, .bezel canvas { display:block; width:100%; border-radius:6px; aspect-ratio:2/1; }
+  .caps { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; margin-top:14px; font-size:12.5px; color:var(--dim); }
+  .caps .lab { margin-bottom:2px; }
+  .key { display:inline-block; font:500 9.5px var(--mono); color:#000; padding:1px 5px; border-radius:2px; margin-right:3px; }
+  .car { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .car button { width:24px; height:24px; border-radius:50%; border:1px solid var(--line2); background:transparent; color:var(--dim); cursor:pointer; font:12px var(--mono); }
+  .car button:hover { color:var(--text); border-color:var(--muted); }
+  .pips { display:flex; gap:6px; }
+  .pips i { width:6px; height:6px; border-radius:50%; background:var(--line2); cursor:pointer; }
+  .pips i.on { background:var(--red); }
+
+  /* stats band */
+  .band { background:var(--band); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:26px 0 22px; }
+  .band .wrap { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+  .band .n { font:200 34px/1.1 var(--sans); }
+  .band .lab { margin-top:6px; max-width:200px; }
+
+  /* contents */
+  .contents { padding:46px 0 40px; border-bottom:1px solid var(--line); }
+  .contents .cols { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:16px; }
+  .toc h4 { margin:0 0 8px; font:400 14px var(--sans); display:flex; gap:14px; }
+  .toc h4 i, .toc li i { font:400 10px var(--mono); color:var(--blue); font-style:normal; width:22px; display:inline-block; }
+  .toc ul { list-style:none; margin:0 0 22px; padding:0; }
+  .toc li { font-size:12.5px; color:var(--dim); line-height:1.75; }
+  .toc li i { color:var(--muted); }
+  .toc a { text-decoration:none; } .toc a:hover { color:var(--text); }
+
+  /* sections */
+  section.s { padding:84px 0 20px; border-bottom:1px solid var(--line); }
+  .shead { display:grid; grid-template-columns:58px 1fr; gap:0; margin-bottom:46px; max-width:640px; }
+  .shead .num { font:100 64px/0.8 var(--sans); color:var(--muted); }
+  .shead h2 { font:300 32px/1.15 var(--sans); margin:0 0 12px; letter-spacing:-.01em; }
+  .shead p { color:var(--dim); margin:0; }
+  .sub { display:grid; grid-template-columns:1fr 1.15fr; gap:48px; align-items:center; margin-bottom:72px; }
+  .sub.top { align-items:start; }
+  .sub h3 { font:400 15px var(--sans); margin:0 0 10px; display:flex; align-items:baseline; gap:10px; }
+  .sub h3 i { font:400 10px var(--mono); color:var(--muted); font-style:normal; }
+  .sub p { color:var(--dim); margin:0 0 12px; font-size:14px; }
+  .sub p.note { font-size:12px; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:14px 16px; }
+  .card .chead { display:flex; justify-content:space-between; margin:-2px 0 12px; }
+  .card img { display:block; width:100%; border-radius:3px; }
+  .card.img { padding:10px; }
+  .card.img .chead { margin:2px 6px 10px; }
+  table.t { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.t td, table.t th { padding:7px 4px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; color:var(--dim); }
+  table.t th { font:400 10px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  table.t td:first-child { color:var(--text); white-space:nowrap; }
+  table.t tr:last-child td { border-bottom:0; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { border:1px solid var(--line2); border-radius:20px; padding:3px 10px; font-size:12px; color:var(--dim); }
+  .chip.on { border-color:var(--red); color:var(--red); }
+  .bars .row { display:grid; grid-template-columns:64px 1fr 58px; gap:10px; align-items:center; font-size:12px; margin:8px 0; }
+  .bars .track { height:6px; background:#1d1d21; border-radius:1px; position:relative; }
+  .bars .fill { position:absolute; inset:0 auto 0 0; background:var(--blue); border-radius:1px; }
+  .bars .v { font:10.5px var(--mono); color:var(--muted); text-align:right; }
+  .callout { border-left:2px solid var(--red); padding:4px 0 4px 14px; margin:14px 0; color:var(--dim); font-size:13.5px; }
+  ol.steps { margin:0; padding:0; list-style:none; counter-reset:s; }
+  ol.steps li { counter-increment:s; display:grid; grid-template-columns:28px 1fr; font-size:14px; color:var(--dim); margin:0 0 12px; }
+  ol.steps li::before { content:counter(s); font:400 10.5px/2.1 var(--mono); color:var(--blue); }
+  .ver .row { display:grid; grid-template-columns:90px 1fr; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); color:var(--dim); }
+  .ver .row:last-of-type { border-bottom:0; }
+  .ver .row span:first-child { font:400 10px/2 var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .ver .hash { font:10.5px var(--mono); word-break:break-all; color:var(--muted); }
+  .ver .btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+
+  /* the demo */
+  .demo .bezel { margin-bottom:14px; }
+  .bar { display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin:4px 0 14px; }
+  label.t { display:flex; gap:8px; align-items:center; font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); }
+  #play { min-width:84px; justify-content:center; }
+  .knobs { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .k { background:var(--card); border:1px solid var(--line); border-top:2px solid var(--c); border-radius:3px; padding:10px 12px 12px; }
+  .k .row { display:flex; justify-content:space-between; font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .k .row span:first-child { color:var(--c); }
+  .k .v { color:var(--text); }
+  input[type=range] { width:100%; accent-color:var(--c, var(--grl)); }
+  button.press { margin-top:8px; padding:5px 9px; font-size:10px; }
+  button.press.on { color:#000; background:var(--c); border-color:var(--c); }
+  .genres { display:flex; flex-wrap:wrap; gap:6px; margin:26px 0 10px; }
+  .genres button { padding:5px 10px; font:400 10px var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--dim); background:transparent; border:1px solid var(--line2); border-radius:20px; cursor:pointer; }
+  .genres button:hover { color:var(--text); }
+  .genres button.on { color:var(--blue); border-color:var(--blue); }
+  .drums { background:#000; border:1px solid var(--line); border-radius:4px; padding:10px 12px; }
+  .drums canvas { display:block; width:100%; cursor:pointer; }
+  .gmeta { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  .dnote { color:var(--dim); font-size:13.5px; margin:14px 0 0; max-width:760px; }
+
+  footer { padding:44px 0 60px; }
+  footer .links { display:flex; flex-wrap:wrap; gap:18px; margin-bottom:18px; }
+  footer .links a { font:400 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--dim); text-decoration:none; }
+  footer p { color:var(--muted); font-size:12.5px; margin:0 0 8px; max-width:720px; }
+  footer .fine { font-size:11px; }
+
+  @media (max-width: 860px) {
+    .hero .wrap, .sub { grid-template-columns:1fr; gap:28px; }
+    .band .wrap, .contents .cols { grid-template-columns:1fr 1fr; }
+    .knobs { grid-template-columns:1fr 1fr; }
+    nav.main .links a:not(.btn) { display:none; }
+    h1 { font-size:44px; }
+  }
+</style>
+<style>
+  pre.code { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:14px 16px; margin:0; overflow-x:auto;
+             font:12px/1.7 var(--mono); color:var(--dim); white-space:pre; }
+  pre.code .c { color:var(--muted); }
+  .hero.small { padding:64px 0 40px; border-bottom:1px solid var(--line); }
+  .hero.small .wrap { display:block; }
+  .hero.small h1 { font-size:50px; }
+  .hero.small p { max-width:640px; }
+</style>
+</head>
+<body id="top">
+<div class="topline"><div class="wrap"><span class="dot" style="background:var(--red)"></span><span class="lab">for hundekraft 3.2 · original OP-1 · firmware 246</span></div></div>
+<nav class="main"><div class="wrap">
+  <a class="logo" href="./"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#FF3A5D" stroke-width="2.2"/><path d="M16 2v8M16 22v8M2 16h8M22 16h8" stroke="#FF3A5D" stroke-width="2.2"/><circle cx="16" cy="16" r="1.6" fill="#FF3A5D"/></svg><span>DUCK <b>CALL</b></span></a>
+  <div class="links">
+    <a href="./#how"><i>1</i>How it works</a><a href="./#screen"><i>2</i>The screen</a><a href="./#controls"><i>3</i>Controls</a><a href="./#install"><i>4</i>Install</a><a href="./#demo"><i>5</i>Play it</a>
+    <a href="manual.html">Manual</a><a href="make.html">Make plugins</a><a class="btn red" href="duckcall.knl" download>Download</a>
+  </div>
+</div></nav>
+
+
+
+<header class="hero small"><div class="wrap">
+  <div class="kicker"><span class="dot" style="background:var(--blue)"></span><span class="dot" style="background:var(--green)"></span><span class="dot" style="background:var(--white)"></span><span class="dot" style="background:var(--red)"></span><span class="lab">Make your own · hundekraft plugins</span></div>
+  <h1>Build a<br><em>plugin.</em></h1>
+  <p>How Duck Call was made, start to finish, so you can make your own OP-1 plugin. The short version: do most of your testing on your computer, not in the emulator, and only use the OP-1 for the final check.</p>
+</div></header>
+
+<section class="s" id="sdk" style="padding-top:64px"><div class="wrap">
+  <div class="shead"><div class="num">1</div><div><h2>Get the SDK</h2><p>Everything comes from hundekraft's source download. It has the plugin headers, two templates, the packer and a plugin guide.</p></div></div>
+  <div class="sub top">
+    <div><h3><i>1.1</i>Download and unpack</h3>
+      <p>Get the source that matches the hundekraft on your OP-1, check its SHA-256, and unpack it. All the commands on this page run from <code>ext/kennel</code> inside it.</p>
+      <p>Read <code>PLUGIN_GUIDE.md</code> at the top of the download first. It covers the API, the screen rules and what a plugin may and may not touch.</p>
+      <div class="callout">The guide is written to be handed to an AI assistant like Claude. That's how Duck Call was built: describe what you want, give it the guide and the SDK, and work through it together.</div></div>
+    <pre class="code"><span class="c"># hundekraft 3.2 source and SDK</span>
+curl -LO https://hundekraft.github.io/op1-workshop/source/hundekraft-3.2-source.tar.gz
+curl -LO https://hundekraft.github.io/op1-workshop/source/hundekraft-3.2-source.tar.gz.sha256
+shasum -a 256 -c hundekraft-3.2-source.tar.gz.sha256
+tar xzf hundekraft-3.2-source.tar.gz
+cd hundekraft-3.2-source/ext/kennel
+
+<span class="c"># what you'll use</span>
+synth_sdk/op1_plugin.h        <span class="c"># the API</span>
+synth_sdk/template/fx         <span class="c"># an effect to start from</span>
+synth_sdk/template/synth      <span class="c"># a synth to start from</span>
+synth_sdk/kennel/kn_exports.c <span class="c"># everything a plugin can call</span>
+tools/kennel/pack.py          <span class="c"># builds the .knl</span></pre>
+  </div>
+  <div class="sub top">
+    <div><h3><i>1.2</i>Copy a template</h3>
+      <p>Start from the effect template. It's a tremolo with a soft clipper, small enough to read in one go. Give your copy a new name in the folder, the file, the symbol and <code>plugin.json</code>, and keep that name for every future version.</p>
+      <p class="note">An effect gets 64 samples at a time and four knobs, in fixed point (32767 means 1.0). Keep state in an array of three, one per FX position: synth, drums and master.</p></div>
+    <pre class="code">mkdir -p synth_sdk/plugins/myfx
+cp synth_sdk/template/fx/myfx.c    synth_sdk/plugins/myfx/
+cp synth_sdk/template/fx/plugin.json synth_sdk/plugins/myfx/</pre>
+  </div>
+</div></section>
+
+<section class="s" id="test"><div class="wrap">
+  <div class="shead"><div class="num">2</div><div><h2>Test on your computer</h2><p>This is the step that saves the most time. Compile your effect with your computer's own C compiler, run audio through it, and listen to a WAV file. A change takes seconds to try, and crashes show up as readable errors instead of a frozen OP-1.</p></div></div>
+  <div class="sub top">
+    <div><h3><i>2.1</i>The fx-host kit</h3>
+      <p>The SDK's header expects a small file of stand-ins for the OP-1 (<code>harness/op1_host.h</code>), but the 3.2 download leaves it out. The <a href="https://github.com/ssimorka/duck-call/tree/main/tools/fx-host">fx-host kit</a> in Duck Call's repo has one, plus a runner.</p>
+      <p>It plays 8 seconds of a chord pad over a kick at 120 BPM through your effect and writes <code>dry.wav</code> and <code>wet.wav</code>. The kick doubles as the sidechain, and the beat clock runs at 120 BPM, so tempo and sidechain effects work too.</p>
+      <p class="note">Leave the sanitizers on. They catch out-of-bounds reads and overflow, the bugs that crash or click on the OP-1.</p></div>
+    <pre class="code">git clone https://github.com/ssimorka/duck-call
+K=$PWD/synth_sdk          <span class="c"># from ext/kennel</span>
+cd duck-call/tools/fx-host
+
+cc -O2 -Wall -fsanitize=address,undefined -I. -I$K \
+   -DPLUGIN_C="\"$K/plugins/myfx/myfx.c\"" -DFX=FX_myfx \
+   fx_host.c -lm -o fx_host
+
+<span class="c"># the four knobs, 0 to 32767: blue green white red</span>
+./fx_host 8000 16000 4000 32767
+<span class="c"># knobs 8000 16000 4000 32767: level in -14.8 dB,</span>
+<span class="c"># out -14.7 dB, 0 clipped samples. Wrote dry.wav and wet.wav.</span></pre>
+  </div>
+  <div class="sub top">
+    <div><h3><i>2.2</i>And the emulator?</h3>
+      <p>It's useful at the end, to check your plugin against the real firmware, but it's slow to work with day to day. For Duck Call the loop was: change the code, run fx-host, listen, repeat. Then pack it and try it on the OP-1.</p></div>
+    <div class="card"><table class="t"><tr><th>Check</th><th>Where</th></tr>
+      <tr><td>Does it sound right?</td><td>fx-host, listening to wet.wav</td></tr>
+      <tr><td>Does it crash or overflow?</td><td>fx-host, with the sanitizers</td></tr>
+      <tr><td>Is the screen art valid?</td><td><code>harness/svg_check.py</code></td></tr>
+      <tr><td>Does it load and run?</td><td><code>pack.py</code>, then the OP-1</td></tr></table></div>
+  </div>
+</div></section>
+
+<section class="s" id="build"><div class="wrap">
+  <div class="shead"><div class="num">3</div><div><h2>Build the .knl</h2><p>The OP-1 runs a Blackfin chip, so the final build needs a Blackfin cross compiler. Your computer's normal compiler can't make OP-1 code.</p></div></div>
+  <div class="sub top">
+    <div><h3><i>3.1</i>The compiler</h3>
+      <p>You need <code>bfin-elf-gcc</code> with libgcc. hundekraft 3.x uses GCC 13.3.0, and nobody ships it ready-made, so you build it once from GNU binutils 2.42 and GCC 13.3.0. <a href="https://github.com/ssimorka/duck-call/blob/main/tools/build-bfin-toolchain.sh">build-bfin-toolchain.sh</a> does it with the same options Duck Call's compiler used. It takes 30 to 60 minutes.</p>
+      <p class="note">On a Mac, do it in a Linux VM or container. If a build step stops halfway, run make again and it picks up where it left off.</p></div>
+    <pre class="code"><span class="c"># one script does it all (Linux or a Linux VM)</span>
+duck-call/tools/build-bfin-toolchain.sh
+export PATH=$HOME/bfin/tc/bin:$PATH
+bfin-elf-gcc --version   <span class="c"># bfin-elf-gcc (GCC) 13.3.0</span>
+
+<span class="c"># the gcc options it uses</span>
+--target=bfin-elf --enable-languages=c --without-headers
+--with-newlib --disable-shared --disable-threads --disable-libssp
+--disable-multilib --disable-bootstrap
+make all-gcc all-target-libgcc</pre>
+  </div>
+  <div class="sub top">
+    <div><h3><i>3.2</i>Pack it</h3>
+      <p><code>pack.py</code> compiles your folder and writes one <code>.knl</code> file. It stops with a clear message if you call something the OP-1 doesn't offer, or if your screen art breaks a rule.</p></div>
+    <pre class="code">python3 tools/kennel/pack.py synth_sdk/plugins/myfx -o build/myfx.knl
+<span class="c"># build/myfx.knl: 836 bytes, sections .text 604,</span>
+<span class="c"># .rodata 12, .data 0, .bss 12; ... imports none</span></pre>
+  </div>
+</div></section>
+
+<section class="s" id="op1"><div class="wrap">
+  <div class="shead"><div class="num">4</div><div><h2>Try it on the OP-1</h2><p>Install through the hundekraft workshop like any other plugin. Same name replaces the old version, so each try only takes a minute.</p></div></div>
+  <div class="sub top">
+    <div><h3><i>4.1</i>Install and iterate</h3>
+      <ol class="steps">
+        <li><span>Open the <a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a> in Chrome.</span></li>
+        <li><span>Go to <b>Your plugins</b>, choose <b>Add your plugin files</b> and pick your <code>.knl</code>.</span></li>
+        <li><span><b>Connect my OP-1</b>, <b>Review changes</b>, <b>Send</b>, then press <b>T1</b>.</span></li>
+        <li><span>Load it from the FX list, play, and take notes. A phone video of the screen helps a lot.</span></li>
+      </ol></div>
+    <div class="card"><div class="chead"><span class="lab">Things that bit us</span></div>
+      <table class="t">
+        <tr><td>Knob words</td><td>Raw words have the filter slot's range. Read them through <code>op1_fx_param_q15()</code>.</td></tr>
+        <tr><td>Presses</td><td>Only blue, green and white get a page 2. Red can be stepped or a switch.</td></tr>
+        <tr><td>Screen bottom</td><td>Keep art above about y 146 on effect screens.</td></tr>
+        <tr><td>Speed</td><td>No floats in the audio path. Fixed point and lookup tables only.</td></tr></table></div>
+  </div>
+</div></section>
+
+<section class="s" id="screens"><div class="wrap">
+  <div class="shead"><div class="num">5</div><div><h2>Screens</h2><p>A screen is two parts: still art in an SVG, drawn once, and a function that draws the moving parts as lines every frame. Read <code>docs/screen-art.md</code> for the rules.</p></div></div>
+  <div class="sub top">
+    <div><h3><i>5.1</i>How Duck Call's screen works</h3>
+      <p>The marquee, rays, clouds and knob scales are the SVG. The ducks, waves, curtains, rifle and sight are about 500 lines a frame from <code>duckcall_screen.c</code>. Things behind are clipped against what's in front.</p>
+      <p>A script, <a href="https://github.com/ssimorka/duck-call/blob/main/plugin/gen_screen.py"><code>gen_screen.py</code></a>, writes both the SVG and the moving parts' shapes from the same numbers, so they always line up. The design was worked out first in a web prototype, then ported.</p></div>
+    <div class="card"><table class="t"><tr><th>Rule</th><th>Why</th></tr>
+      <tr><td>Colors</td><td>Blue, green, white and red each belong to a knob. Indigo and grays for the rest.</td></tr>
+      <tr><td>Cost</td><td>Each line costs time. The busiest stock-style screens draw around 600.</td></tr>
+      <tr><td>SVG</td><td>Simple paths only: M, L, H, V, C, S, Z. No fills on open shapes.</td></tr>
+      <tr><td>Still when silent</td><td>Freeze when there's no sound, so it doesn't fight the music for CPU.</td></tr></table></div>
+  </div>
+  <p class="dnote" style="margin-bottom:56px">Questions? Duck Call's whole source is on <a href="https://github.com/ssimorka/duck-call">GitHub</a> to read and borrow from, under the same GPL-3.0 terms as hundekraft.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="links"><a href="duckcall.knl" download>Download</a><a href="manual.html">Manual</a><a href="make.html">Make plugins</a><a href="https://github.com/ssimorka/duck-call">GitHub</a><a href="https://github.com/ssimorka/duck-call/releases">Releases</a><a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a><a href="https://ko-fi.com/stephsimorka" style="color:var(--red)">&#9829; Support on Ko-fi</a></div>
+  <p>Duck Call is free and made for fun. If it puts a smile on your set, you can <a href="https://ko-fi.com/stephsimorka">buy me a coffee on Ko-fi</a>.</p>
+  <p>Duck Call by Steph Simorka. Built on hundekraft's kennel plugin SDK, inspired by Befaco PercAll. The demo's beats come from Rhythm Machine.</p>
+  <p class="fine">Free software under GPL-3.0-or-later with the OP-1 firmware permission. Not affiliated with or endorsed by teenage engineering, hundekraft or Befaco. OP-1 is a trademark of teenage engineering.</p>
+</div></footer>

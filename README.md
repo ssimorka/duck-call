@@ -51,6 +51,13 @@ The plugin source is in [`plugin/`](plugin). It builds with the hundekraft plugi
 | `gen_screen.py` | Generates the still art (`duckcall.svg`) and the moving parts' geometry (`duckcall_geom.h`) |
 | `plugin.json` | Name, knob defaults, screen |
 
+## Make your own plugin
+
+[Build a plugin](https://ssimorka.github.io/duck-call/make.html) walks through how Duck Call was made: the hundekraft SDK, testing on your computer instead of the emulator, the Blackfin compiler and screens.
+
+- [`tools/fx-host`](tools/fx-host): run any kennel effect on your computer and listen to the result as a WAV.
+- [`tools/build-bfin-toolchain.sh`](tools/build-bfin-toolchain.sh): build the `bfin-elf-gcc` 13.3.0 compiler the packer needs.
+
 ## Credits
 
 Designed by Steph Simorka. Built on [hundekraft](https://hundekraft.github.io/op1-workshop/)'s kennel plugin SDK. Inspired by [Befaco PercAll](https://befaco.org/docs/Percall/Percall_V1_User_Manual.pdf). The demo's beats come from Rhythm Machine's genre library.
