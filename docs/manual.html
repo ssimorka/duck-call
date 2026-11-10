@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duck Call: Manual</title>
+<style>
+  :root { --bg:#000; --panel:#0c0c10; --line:#24233a; --text:#ECECEE; --muted:#8B8B96; --ind:#383572;
+          --blue:#698EFF; --green:#00ED95; --white:#FFFFFF; --red:#FF3A5D; --gr:#6F7173; --grl:#A3A5A8;
+          --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  a { color:var(--text); text-underline-offset:3px; }
+  main { max-width:1000px; margin:0 auto; padding:28px 20px 64px; }
+  nav { display:flex; gap:18px; align-items:center; font:12px var(--mono); text-transform:uppercase; letter-spacing:.08em; margin-bottom:28px; }
+  nav a { color:var(--muted); text-decoration:none; } nav a:hover, nav a.on { color:var(--text); }
+  nav .sp { flex:1; }
+  header.hero { display:flex; flex-wrap:wrap; gap:16px; align-items:end; justify-content:space-between; margin-bottom:18px; }
+  h1 { font:600 34px/1.05 var(--mono); letter-spacing:.02em; margin:0; text-transform:uppercase;
+       color:var(--grl); text-shadow:2px 2px 0 var(--ind); }
+  .tag { font:12px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-top:8px; }
+  .lede { color:var(--muted); max-width:640px; margin:0 0 20px; }
+  .dl { display:inline-flex; gap:10px; align-items:center; background:var(--red); color:#000; font:600 13px var(--mono);
+        text-transform:uppercase; letter-spacing:.06em; padding:11px 18px; border-radius:8px; text-decoration:none; }
+  .dl:hover { filter:brightness(1.08); }
+  .screen { background:#000; border-radius:14px; padding:12px; border:1.5px solid var(--grl); }
+  canvas { display:block; width:100%; }
+  #scr { aspect-ratio:2/1; border-radius:6px; }
+  .bar { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:14px 0 6px; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 14px;
+           font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; cursor:pointer; }
+  button:hover { border-color:var(--gr); }
+  button.primary { background:var(--text); color:#000; border-color:var(--text); }
+  label.t { display:flex; gap:8px; align-items:center; color:var(--muted); font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+  h2 { font:600 13px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--grl); margin:36px 0 12px; }
+  .genres { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .genres button { padding:6px 10px; font-size:11px; color:var(--muted); }
+  .genres button.on { color:#000; background:var(--blue); border-color:var(--blue); }
+  .drums { background:#000; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  #grid { cursor:pointer; }
+  .gmeta { display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; font:11px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:8px; }
+  .knobs { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-top:12px; }
+  .k { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; border-top:3px solid var(--c); }
+  .k .row { display:flex; justify-content:space-between; font:12px var(--mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  .k .row span:first-child { color:var(--c); }
+  .k .v { color:var(--text); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--c, var(--grl)); }
+  button.press { margin-top:8px; padding:5px 10px; font-size:11px; }
+  button.press.on { background:var(--c); color:#000; border-color:var(--c); }
+  .notes { color:var(--muted); font-size:14px; line-height:1.65; }
+  .notes b { color:var(--text); font-weight:500; }
+  ol.steps { padding-left:22px; } ol.steps li { margin:6px 0; }
+  code { font:13px var(--mono); background:var(--panel); border:1px solid var(--line); padding:1px 5px; border-radius:4px; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; }
+  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+</style>
+<style>
+  .doc h1 { margin-bottom:4px; } .doc h2 { margin-top:44px; font-size:15px; }
+  .doc p, .doc li { max-width:760px; } .doc em { color:var(--muted); }
+  .doc table { border-collapse:collapse; width:100%; font-size:14px; margin:14px 0; }
+  .doc th, .doc td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  .doc th { font:600 11px var(--mono); text-transform:uppercase; letter-spacing:.06em; color:var(--grl); }
+  .doc img { width:100%; max-width:720px; border:1.5px solid var(--grl); border-radius:12px; display:block; margin:16px 0 4px; }
+  .doc strong { font-weight:600; }
+</style>
+</head>
+<body>
+<main class="doc">
+  <nav><a href="./">Duck Call</a><a href="manual.html" class="on">Manual</a><span class="sp"></span><a href="https://github.com/ssimorka/duck-call">GitHub</a></nav>
+<h1>Duck Call: Manual</h1>
+<p><em>Sidechain, gate and choke. Step right up.</em></p>
+<p>Duck Call is an effect for the OP-1 on hundekraft. Something hits, and your sound dips out of the way (duck), or opens up only on the hit (gate). The hits come from the beat grid, a tape track, the input, or the sound itself. It is modeled on Befaco's PercAll, a Eurorack module of decay envelopes, VCAs and choke switches.</p>
+<p>The screen is an early 20th-century carnival duck shoot. Every hit knocks rubber ducks down, the rifle fires on the beat, and the curtains, waves and sight show your settings. You can read the whole effect at a glance.</p>
+<h2>Install</h2>
+<p>Duck Call is one file, <code>duckcall.knl</code>. It needs hundekraft 3.2 or later on the OP-1.</p>
+<ol>
+<li>Download <a href="https://ssimorka.github.io/duck-call/duckcall.knl"><code>duckcall.knl</code></a>.</li>
+<li>Open the <a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a> in Chrome.</li>
+<li>Go to the <strong>Your plugins</strong> tab and choose <strong>Add your plugin files</strong>. Pick <code>duckcall.knl</code>.</li>
+<li>Choose <strong>Connect my OP-1</strong>, then <strong>Review changes</strong>, then <strong>Send</strong>.</li>
+<li>When the OP-1 asks, press <strong>T1</strong> to install.</li>
+</ol>
+<p><strong>Load:</strong> open the FX screen of a synth, the drums or the master, and pick <strong>duckcall</strong> from the effects.</p>
+<p>To update, add the new <code>duckcall.knl</code> the same way. A file with the same name replaces the old one, and your sounds keep their settings.</p>
+<h2>The screen</h2>
+<p>Every part of the scene is tied to a knob, in that knob's color. The scene moves while sound comes through or the tape runs. In silence it holds still.</p>
+<p><img alt="Duck Call's screen" src="img/screen.png" /></p>
+<p><em>Fig. 1: just after a hit on beat 2 at 1/4. A front duck is going down with green ricochet dashes, the rifle's muzzle flash is still lit, and the sight's tick for that beat is white.</em></p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ducks (green)</td>
+<td>Each hit knocks ducks down for as long as the dip lasts. The 1 of the bar takes the back pair. Other hits take turns along the front row. A down duck turns indigo and sinks.</td>
+</tr>
+<tr>
+<td>Green dashes</td>
+<td>A ricochet over each duck that goes down.</td>
+</tr>
+<tr>
+<td>Wobble and dodge</td>
+<td>Standing ducks wobble on every hit. They duck their heads on a miss (a hit under the sensitivity).</td>
+</tr>
+<tr>
+<td>Waves (blue)</td>
+<td>Attack. Sharp, choppy waves for a short attack, rounded swells for a long one. They roll faster with a shorter length.</td>
+</tr>
+<tr>
+<td>Curtains (white)</td>
+<td>Shape. The inner edge of the curtains draws the curve: pump, linear, hold or choke.</td>
+</tr>
+<tr>
+<td>Rifle</td>
+<td>Flip. It aims left for gate, center for flat, right for duck. It turns white while you're on white's page 2.</td>
+</tr>
+<tr>
+<td>Muzzle flash (red)</td>
+<td>Fires on every hit. Bigger on the 1.</td>
+</tr>
+<tr>
+<td>Sight (red)</td>
+<td>Source. Each source has its own sight (see Sources). Beat sources light the tick of the pulse that fired. Track and input sights flash white on a hit. A red X means a choke just landed.</td>
+</tr>
+<tr>
+<td>Marquee bulbs</td>
+<td>Chase one step on every hit. All light up on the 1.</td>
+</tr>
+<tr>
+<td>Knobs</td>
+<td>A fill or pointer for each value, with the value in words below it.</td>
+</tr>
+<tr>
+<td>Page 2</td>
+<td>A ring inside the knob, and the value on a chip of the knob's color.</td>
+</tr>
+</tbody>
+</table>
+<p>On white's page 2 (flip), the white arc grows from the top of the knob: left toward gate, right toward duck.</p>
+<h2>Controls</h2>
+<p>Push blue, green or white for page 2. Push red to switch choke on. Page 2 settings are saved with the sound. The choke switch is not, so it starts off each time you load the sound.</p>
+<table>
+<thead>
+<tr>
+<th>Knob</th>
+<th>Control</th>
+<th>Range</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blue</td>
+<td><strong>Length</strong></td>
+<td>15 ms to 2 s</td>
+<td>281 ms</td>
+<td>How long a full-strength dip (or gate) lasts. Softer hits last less, down to a quarter of this.</td>
+</tr>
+<tr>
+<td>Blue, page 2</td>
+<td><strong>Attack</strong></td>
+<td>0.2 to 100 ms</td>
+<td>3 ms</td>
+<td>How fast the level moves into the dip and back. Short is a hard, punchy cut. Long is a swell.</td>
+</tr>
+<tr>
+<td>Green</td>
+<td><strong>Strength</strong></td>
+<td>12 to 100%</td>
+<td>89%</td>
+<td>How deep each dip goes, and how long it lasts (PercAll's strength). Deep from the middle of the knob up. 100% goes to silence.</td>
+</tr>
+<tr>
+<td>Green, page 2</td>
+<td><strong>Accent</strong> (beat sources)</td>
+<td>0 to 100%</td>
+<td>50%</td>
+<td>Softens every hit but the 1. At 0% all hits are equal. At 100% only the 1 is left.</td>
+</tr>
+<tr>
+<td>Green, page 2</td>
+<td><strong>Sensitivity</strong> (track, tape, input, self)</td>
+<td>0 to 100%</td>
+<td>50%</td>
+<td>How loud a hit must be to count. Hits below it are misses.</td>
+</tr>
+<tr>
+<td>White</td>
+<td><strong>Shape</strong></td>
+<td>Pump, Linear, Hold, Choke</td>
+<td>Hold</td>
+<td>The curve of each dip. Snaps to the four shapes.</td>
+</tr>
+<tr>
+<td>White, page 2</td>
+<td><strong>Flip</strong></td>
+<td>Gate to Flat to Duck</td>
+<td>Duck</td>
+<td>Duck dips on each hit. Gate is silent and opens on each hit. Flat in the middle does nothing. Between them is a blend.</td>
+</tr>
+<tr>
+<td>Red</td>
+<td><strong>Source</strong></td>
+<td>16 sources</td>
+<td>1/4</td>
+<td>What makes the hits. Snaps to the sources.</td>
+</tr>
+<tr>
+<td>Red, push</td>
+<td><strong>Choke</strong></td>
+<td>On or off</td>
+<td>Off</td>
+<td>The partner track's hits cut the current dip or gate short.</td>
+</tr>
+</tbody>
+</table>
+<p>The values shown on screen are the real ones, so green's label reads the actual depth, not the knob position.</p>
+<h2>Sources</h2>
+<p>Red picks what makes the hits. The first eight are the beat grid. The rest listen to audio.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Hits on</th>
+<th>Sight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1/1, 1/2, 1/4, 1/8, 1/16</td>
+<td>Whole notes down to sixteenths, on the OP-1 tempo</td>
+<td>A ring with a tick per pulse in the bar</td>
+</tr>
+<tr>
+<td>1/4T, 1/8T, 1/16T</td>
+<td>Triplets</td>
+<td>A ring with a tick per pulse</td>
+</tr>
+<tr>
+<td>T1, T2, T3, T4</td>
+<td>A tape track's playback</td>
+<td>A crosshair with one to four corner ticks</td>
+</tr>
+<tr>
+<td>TAPE</td>
+<td>All four tracks together</td>
+<td>A ring with three spokes</td>
+</tr>
+<tr>
+<td>IN</td>
+<td>The audio input (mic or line)</td>
+<td>A peak</td>
+</tr>
+<tr>
+<td>SELF</td>
+<td>The sound the effect is on</td>
+<td>A small mic</td>
+</tr>
+<tr>
+<td>INST</td>
+<td>The instrument under the master FX (master only; elsewhere it acts as SELF)</td>
+<td>A mic in a bracket</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The beat grid</strong> follows the tape while it plays and restarts with it. With the tape stopped it keeps running at the OP-1 tempo, so playing keys pumps on the grid too. Accent (green, page 2) shapes the bar: the 1 always hits at full strength, the beats come next, and the in-betweens are softest.</p>
+<p><strong>Audio sources</strong> listen for a jump in level after a quieter moment. Each hit's strength is its loudness in the first 10 ms, so a soft hit gives a shallow, short dip and a hard hit a deep, long one. After a hit, the detector waits 30 ms before it can fire again. A hit quieter than the sensitivity is a miss: nothing happens to the sound, and the ducks dodge. A hit that lands on the 1 of the bar knocks the back pair down, like a beat source.</p>
+<h2>Duck, gate and the four shapes</h2>
+<p>Flip (white, page 2) sets what a hit does. Shape (white) sets the curve the level follows after it.</p>
+<ul>
+<li><strong>Duck:</strong> the level drops on each hit, then comes back. The classic sidechain pump.</li>
+<li><strong>Gate:</strong> the sound is silent until a hit opens it, then it closes again. Chops pads into rhythm.</li>
+<li><strong>Flat:</strong> in the middle, hits do nothing. Turn slowly from duck through flat to gate to fade one into the other.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>In duck</th>
+<th>In gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pump</strong></td>
+<td>A quick dip that springs right back. The gentlest.</td>
+<td>A short blip.</td>
+</tr>
+<tr>
+<td><strong>Linear</strong></td>
+<td>An even ramp back up.</td>
+<td>An even fade out.</td>
+</tr>
+<tr>
+<td><strong>Hold</strong></td>
+<td>Stays down, then swells back. The big breathing pump.</td>
+<td>Stays open, then fades.</td>
+</tr>
+<tr>
+<td><strong>Choke</strong></td>
+<td>Stays down almost to the end, then snaps open.</td>
+<td>A clean slice that cuts off at the end. PercAll's choked hat.</td>
+</tr>
+</tbody>
+</table>
+<p>Attack (blue, page 2) rounds every corner of the curve, both into the dip and back out.</p>
+<h2>Choke</h2>
+<p>Push red to switch choke on, the way PercAll's choke switches work. With choke on, a hit on the partner track ends the current dip or gate on the spot.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Choked by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>T2</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>T1</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>T4</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>T3</td>
+</tr>
+<tr>
+<td>Everything else</td>
+<td>T1</td>
+</tr>
+</tbody>
+</table>
+<p>Red's chip shows the pair, for example <strong>T2 CUT T1</strong>. When a choke lands, the sight is crossed out with a red X and the ducks react right away.</p>
+<ul>
+<li><strong>In gate:</strong> the hi-hat trick. T2 opens the sound, a T1 hit slams it shut.</li>
+<li><strong>In duck:</strong> a T1 hit lets the sound pop right back up.</li>
+</ul>
+<p>The partner has to be a tape track that is playing back. The switch is not saved with the sound.</p>
+<h2>Recipes</h2>
+<p>Starting points. Put Duck Call on the sound named in each row, then set the knobs.</p>
+<table>
+<thead>
+<tr>
+<th>Recipe</th>
+<th>On</th>
+<th>Source</th>
+<th>Length</th>
+<th>Strength</th>
+<th>Shape</th>
+<th>Page 2</th>
+<th>Choke</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Classic pump</strong></td>
+<td>Synth pad or chords</td>
+<td>1/4</td>
+<td>300 to 400 ms</td>
+<td>70%</td>
+<td>Hold</td>
+<td>Attack 20 ms, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Kick pump</strong></td>
+<td>Synth bass</td>
+<td>T1 (your kick)</td>
+<td>200 ms</td>
+<td>90%</td>
+<td>Hold</td>
+<td>Attack 3 ms, Sensitivity 50%, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Trance gate</strong></td>
+<td>Synth pad</td>
+<td>1/16</td>
+<td>80 ms</td>
+<td>100%</td>
+<td>Choke</td>
+<td>Attack 1 ms, Gate</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Triplet chop</strong></td>
+<td>Synth chords</td>
+<td>1/8T</td>
+<td>120 ms</td>
+<td>100%</td>
+<td>Linear</td>
+<td>Gate</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Bar breather</strong></td>
+<td>Synth pad</td>
+<td>1/1</td>
+<td>1.5 s</td>
+<td>100%</td>
+<td>Hold</td>
+<td>Attack 60 ms, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Groove accents</strong></td>
+<td>Synth pad</td>
+<td>1/8</td>
+<td>200 ms</td>
+<td>90%</td>
+<td>Hold</td>
+<td>Accent 70%, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Hi-hat choke</strong></td>
+<td>Synth or drums</td>
+<td>T2 (open hat)</td>
+<td>1 s</td>
+<td>100%</td>
+<td>Hold</td>
+<td>Gate</td>
+<td>On (T1 closed hat)</td>
+</tr>
+<tr>
+<td><strong>Talk-over</strong></td>
+<td>Master</td>
+<td>IN (mic)</td>
+<td>600 ms</td>
+<td>70%</td>
+<td>Hold</td>
+<td>Attack 40 ms, Sensitivity 30%, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Self swell</strong></td>
+<td>Synth lead</td>
+<td>SELF</td>
+<td>400 ms</td>
+<td>100%</td>
+<td>Linear</td>
+<td>Attack 100 ms, Duck</td>
+<td>Off</td>
+</tr>
+<tr>
+<td><strong>Bounce back</strong></td>
+<td>Synth pad</td>
+<td>1/4</td>
+<td>1 s</td>
+<td>100%</td>
+<td>Hold</td>
+<td>Duck</td>
+<td>On (T1)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Self swell</strong> makes every new note dip and swell back in, like a reverse attack. <strong>Bounce back</strong> pumps on the grid, and a T1 hit lets the pad back in early.</p>
+<h2>Tips and tricks</h2>
+<ul>
+<li><strong>Duck shines on long sounds.</strong> Pads, chords and bass show the pump best. On drums, the dip lands right on the hit, so you mostly hear the drums get quieter.</li>
+<li><strong>Duck too subtle?</strong> Go to Hold or Choke, and push strength past 70%. Pump is the gentlest shape.</li>
+<li><strong>Gate is all-or-nothing.</strong> Between hits the sound is silent, so a long length keeps more of it.</li>
+<li><strong>Short length and fast divisions stop the dip from finishing.</strong> At 1/16 with a long length, each hit restarts the dip before the last one recovers, and the sound stays low. Shorten the length or slow the division.</li>
+<li><strong>Long attacks need room.</strong> A 100 ms attack can't reach full depth on a 60 ms length.</li>
+<li><strong>Accent turns a grid into a groove.</strong> On 1/8 or 1/16, push accent up until only the beats, then only the 1, come through.</li>
+<li><strong>Sensitivity is your filter.</strong> On a busy track, raise it until only the loud hits duck. Ghost notes become misses, and the ducks dodge them.</li>
+<li><strong>The ducks tell you what's working.</strong> If the ducks aren't going down, the hits are too soft or too short to make a real dip.</li>
+<li><strong>Flip is playable.</strong> Sweep white's page 2 from duck through flat to gate during a take.</li>
+<li><strong>Keys pump with the tape stopped.</strong> The beat grid keeps the OP-1 tempo, so you can jam without pressing play.</li>
+<li><strong>Use T1 for your kick.</strong> Choke and the kick pump both expect the drums there.</li>
+<li><strong>SELF is a ducker for the sound itself.</strong> Every new note dips it, a quick way to get swells and "backwards" attacks.</li>
+</ul>
+<p><strong>What's saved with the sound:</strong> all four knobs and the three page-2 settings. <strong>Not saved:</strong> the choke switch.</p>
+<h2>Specs and credits</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type</td>
+<td>Stereo effect (synth, drums or master FX)</td>
+</tr>
+<tr>
+<td>Needs</td>
+<td>OP-1 with hundekraft 3.2 or later (on TE firmware R246)</td>
+</tr>
+<tr>
+<td>File</td>
+<td><code>duckcall.knl</code>, about 36 KB</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>16: eight beat divisions, T1 to T4, TAPE, IN, SELF, INST</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>15 ms to 2 s</td>
+</tr>
+<tr>
+<td>Attack</td>
+<td>0.2 to 100 ms</td>
+</tr>
+<tr>
+<td>Screen</td>
+<td>320 x 160, line art redrawn every frame over a fixed backdrop</td>
+</tr>
+</tbody>
+</table>
+<p>Designed by Steph Simorka. Built on the hundekraft plugin SDK. Inspired by <a href="https://befaco.org/docs/Percall/Percall_V1_User_Manual.pdf">Befaco PercAll</a>. Released under GPL-3.0-or-later with the OP-1 firmware permission.</p>
+  <footer>Duck Call by Steph Simorka. Not affiliated with teenage engineering, hundekraft or Befaco.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duck Call: OP-1 filter</title>
+<meta name="description" content="Duck Call is a sidechain, gate and choke effect for the OP-1 on hundekraft, with a carnival duck-shoot screen. Play the demo, then put it on your OP-1.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23FF3A5D' stroke-width='2.5'/%3E%3Cpath d='M16 3v7M16 22v7M3 16h7M22 16h7' stroke='%23FF3A5D' stroke-width='2.5'/%3E%3C/svg%3E">
+<style>
+  :root { --bg:#000; --panel:#0c0c10; --line:#24233a; --text:#ECECEE; --muted:#8B8B96; --ind:#383572;
+          --blue:#698EFF; --green:#00ED95; --white:#FFFFFF; --red:#FF3A5D; --gr:#6F7173; --grl:#A3A5A8;
+          --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  a { color:var(--text); text-underline-offset:3px; }
+  main { max-width:1000px; margin:0 auto; padding:28px 20px 64px; }
+  nav { display:flex; gap:18px; align-items:center; font:12px var(--mono); text-transform:uppercase; letter-spacing:.08em; margin-bottom:28px; }
+  nav a { color:var(--muted); text-decoration:none; } nav a:hover, nav a.on { color:var(--text); }
+  nav .sp { flex:1; }
+  header.hero { display:flex; flex-wrap:wrap; gap:16px; align-items:end; justify-content:space-between; margin-bottom:18px; }
+  h1 { font:600 34px/1.05 var(--mono); letter-spacing:.02em; margin:0; text-transform:uppercase;
+       color:var(--grl); text-shadow:2px 2px 0 var(--ind); }
+  .tag { font:12px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-top:8px; }
+  .lede { color:var(--muted); max-width:640px; margin:0 0 20px; }
+  .dl { display:inline-flex; gap:10px; align-items:center; background:var(--red); color:#000; font:600 13px var(--mono);
+        text-transform:uppercase; letter-spacing:.06em; padding:11px 18px; border-radius:8px; text-decoration:none; }
+  .dl:hover { filter:brightness(1.08); }
+  .screen { background:#000; border-radius:14px; padding:12px; border:1.5px solid var(--grl); }
+  canvas { display:block; width:100%; }
+  #scr { aspect-ratio:2/1; border-radius:6px; }
+  .bar { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin:14px 0 6px; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 14px;
+           font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; cursor:pointer; }
+  button:hover { border-color:var(--gr); }
+  button.primary { background:var(--text); color:#000; border-color:var(--text); }
+  label.t { display:flex; gap:8px; align-items:center; color:var(--muted); font:12px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+  h2 { font:600 13px var(--mono); text-transform:uppercase; letter-spacing:.12em; color:var(--grl); margin:36px 0 12px; }
+  .genres { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .genres button { padding:6px 10px; font-size:11px; color:var(--muted); }
+  .genres button.on { color:#000; background:var(--blue); border-color:var(--blue); }
+  .drums { background:#000; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  #grid { cursor:pointer; }
+  .gmeta { display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; font:11px var(--mono); color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:8px; }
+  .knobs { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-top:12px; }
+  .k { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; border-top:3px solid var(--c); }
+  .k .row { display:flex; justify-content:space-between; font:12px var(--mono); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  .k .row span:first-child { color:var(--c); }
+  .k .v { color:var(--text); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--c, var(--grl)); }
+  button.press { margin-top:8px; padding:5px 10px; font-size:11px; }
+  button.press.on { background:var(--c); color:#000; border-color:var(--c); }
+  .notes { color:var(--muted); font-size:14px; line-height:1.65; }
+  .notes b { color:var(--text); font-weight:500; }
+  ol.steps { padding-left:22px; } ol.steps li { margin:6px 0; }
+  code { font:13px var(--mono); background:var(--panel); border:1px solid var(--line); padding:1px 5px; border-radius:4px; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; }
+  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="./" class="on">Duck Call</a><a href="manual.html">Manual</a><span class="sp"></span><a href="https://github.com/ssimorka/duck-call">GitHub</a></nav>
+
+  <header class="hero">
+    <div>
+      <h1>Duck Call</h1>
+      <div class="tag">OP-1 filter &middot; sidechain &middot; gate &middot; choke</div>
+    </div>
+    <a class="dl" href="duckcall.knl" download>&#8595; Download for OP-1</a>
+  </header>
+  <p class="lede">Something hits, and your sound ducks out of the way, or opens up only on the hit. Inspired by Befaco's PercAll, built for the OP-1 on hundekraft, and drawn as an early 20th-century carnival duck shoot. Press play, pick a beat, and turn the knobs.</p>
+
+  <div class="screen"><canvas id="scr" width="960" height="480" aria-label="Duck Call's OP-1 screen"></canvas></div>
+
+  <div class="bar">
+    <button id="play" class="primary">Play</button>
+    <label class="t"><input type="checkbox" id="bypass"> Bypass</label>
+    <label class="t">Tempo <input type="range" id="bpm" min="70" max="180" value="122" step="1" style="width:130px;--c:var(--grl)"> <span id="bpmv">122</span></label>
+    <label class="t"><input type="checkbox" id="recipe" checked> Load each beat's recipe</label>
+  </div>
+
+  <div class="knobs">
+    <div class="k" style="--c:var(--blue)"><div class="row"><span id="n0">Blue: length</span><span class="v" id="v0"></span></div><input type="range" id="k0"><button class="press" data-k="0">Press</button></div>
+    <div class="k" style="--c:var(--green)"><div class="row"><span id="n1">Green: strength</span><span class="v" id="v1"></span></div><input type="range" id="k1"><button class="press" data-k="1">Press</button></div>
+    <div class="k" style="--c:var(--white)"><div class="row"><span id="n2">White: shape</span><span class="v" id="v2"></span></div><input type="range" id="k2"><button class="press" data-k="2">Press</button></div>
+    <div class="k" style="--c:var(--red)"><div class="row"><span id="n3">Red: source</span><span class="v" id="v3"></span></div><input type="range" id="k3"><button class="press" id="chk">Press: choke</button></div>
+  </div>
+
+  <h2>Rhythm Machine</h2>
+  <div class="genres" id="genres"></div>
+  <div class="drums"><canvas id="grid" aria-label="Drum pattern, tape tracks T1 to T4"></canvas>
+    <div class="gmeta"><span id="ginfo"></span><span>Click a step to change the beat</span></div>
+  </div>
+  <p class="notes">The beat plays on the OP-1's four tape tracks: <b style="color:var(--blue)">T1</b> kick, <b style="color:var(--green)">T2</b> open hats and cymbals, <b>T3</b> snares and claps, <b style="color:var(--red)">T4</b> closed hats and percussion. Duck Call sits on the pad (the drums stay dry), so set red to a track and the pad answers it. The red crosshair marks the track that triggers, the X marks the track that chokes.</p>
+
+  <h2>Put it on your OP-1</h2>
+  <div class="cols">
+    <div class="notes">
+      <ol class="steps">
+        <li>Your OP-1 needs <a href="https://hundekraft.github.io/op1-workshop/">hundekraft</a> 3.2 or later.</li>
+        <li><a href="duckcall.knl" download>Download <code>duckcall.knl</code></a>.</li>
+        <li>Open the <a href="https://hundekraft.github.io/op1-workshop/">hundekraft workshop</a> in Chrome, go to <b>Your plugins</b> and choose <b>Add your plugin files</b>.</li>
+        <li>Choose <b>Connect my OP-1</b>, then <b>Review changes</b> and <b>Send</b>.</li>
+        <li>Press <b>T1</b> on the OP-1 when it asks. Duck Call is now in the FX list of any synth, the drums or the master.</li>
+      </ol>
+    </div>
+    <div class="notes">
+      <p><b>Blue</b> length, press for attack. <b>Green</b> strength, press for accent or sensitivity. <b>White</b> shape, press for flip (duck, flat, gate). <b>Red</b> source, press for choke.</p>
+      <p>Everything is in the <a href="manual.html">manual</a>, with recipes and tips. Source code, older versions and the screen art are on <a href="https://github.com/ssimorka/duck-call">GitHub</a>.</p>
+    </div>
+  </div>
+
+  <footer>Duck Call by Steph Simorka. Built on the hundekraft plugin SDK, inspired by Befaco PercAll. Free software under GPL-3.0. Not affiliated with teenage engineering, hundekraft or Befaco.</footer>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+// ---------- shared state ----------
+const SH = ['pump','linear','hold','choke'];
+const SRC = ['1/1','1/2','1/4','1/8','1/16','1/4t','1/8t','1/16t','t1','t2','t3','t4','tape','in','self'];
+const DIVS = [1,2,4,8,16,6,12,24];                 // pulses per bar for the beat entries
+const NB = 8, SELF = 14;
+const isBeatSrc = i => i < NB;
+const trackN = i => (i >= 8 && i <= 11) ? i - 7 : 0;
+const P = { len:281, str:0.66, shape:2, src:2, bpm:122, bypass:false,
+            atk:3, sens:0.5, flip:1, page:[0,0,0], choke:false };
+const strengthOf = k => 0.125 + 0.875 * (1 - (1 - k) * (1 - k));   // deep from the middle of the knob up
+const chokeOf = i => i===8?9:i===9?8:i===10?11:i===11?10:8;          // T1<->T2, T3<->T4, the rest: T1
+const V = { gain:1, gainMin:1, flashT:-1, playing:false, timeS:0, events:[], step:-1 };
+
+// ---------- Rhythm Machine: the genre library, one bar of 16ths per part ----------
+const GENRES = {   // patterns from Rhythm Machine's genre library
+  "Motor City Techno": { bpm:122, swing:0.57, recipe:{ src:2, len:300, str:0.62, shape:2, atk:3, flip:1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Snare":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "Rim":[0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,1],
+    "Hat 1":[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0], "Hat 2":[0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0], "Hat 3":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1] } },
+  "Analogue Techno": { bpm:128, swing:0.57, recipe:{ src:8, len:250, str:0.8, shape:2, atk:2, flip:1, sens:0.5 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Clap 1":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Clap 2":[1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0],
+    "Hat 1":[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0], "Hat 2":[0,1,0,0,1,1,0,1,0,1,0,0,1,1,0,1], "Perc":[0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    "Click":[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } },
+  "Deep Tech-House": { bpm:127, swing:0.62, recipe:{ src:2, len:350, str:0.66, shape:2, atk:20, flip:1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Clap":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "Snare 1":[0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0],
+    "Snare 2":[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1], "Hat":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1], "Shaker":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    "Perc":[0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0] } },
+  "Chicago House": { bpm:122, swing:0.57, recipe:{ src:8, len:320, str:0.7, shape:2, atk:4, flip:1, sens:0.5 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0], "Clap":[0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0], "Open Hat":[0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1],
+    "Clos Hat":[1,0,1,0,1,1,0,0,1,0,1,0,1,1,0,0], "Tamb":[0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0], "Rimshot":[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0] } },
+  "Big House": { bpm:125, swing:0.6, recipe:{ src:2, len:420, str:0.85, shape:2, atk:6, flip:1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Clap":[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0], "Snare":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    "Hat 1":[0,1,0,1,0,0,0,1,0,1,0,1,0,0,0,1], "Hat 2":[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0], "Perc 1":[1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0],
+    "Perc 2":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0] } },
+  "Soulful Deep House": { bpm:120, swing:0.57, recipe:{ src:2, len:450, str:0.6, shape:2, atk:30, flip:1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Snare":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "Clos Hat":[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0],
+    "Mid Hat":[0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0], "Open Hat":[0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0], "Clap":[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0],
+    "Shaker":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], "Tamb":[0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0] } },
+  "Dusty Hip Hop": { bpm:90, swing:0.55, recipe:{ src:8, len:260, str:0.7, shape:2, atk:5, flip:1, sens:0.4 }, tracks:{
+    "Kick":[1,0,0,0,0,1,0,1,1,0,0,0,0,1,0,1], "Snare":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "Clap":[0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0],
+    "Clos Hat":[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0], "Open Hat":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], "Conga":[0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0],
+    "Tom":[0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,1] } },
+  "Chillwave": { bpm:95, swing:0.65, recipe:{ src:1, len:800, str:0.75, shape:2, atk:60, flip:1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,1,0,0,1,0,0,0,1,0], "Clap":[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0], "Snare":[0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1],
+    "Clos Hat":[0,1,0,1,0,0,0,1,0,1,0,1,0,0,0,1], "Mid Hat":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Open Hat":[0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0] } },
+  "Pop Dubstep": { bpm:140, swing:0.6, recipe:{ src:6, len:160, str:1, shape:1, atk:2, flip:-1 }, tracks:{
+    "Kick":[1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1], "Snare":[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], "Closed":[0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+    "Rides":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] } },
+  "Incessant D&B": { bpm:172, swing:0.55, recipe:{ src:8, len:200, str:0.85, shape:2, atk:2, flip:1, sens:0.5 }, tracks:{
+    "Kick":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Snare 1":[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0], "Snare 2":[0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0],
+    "Clos Hat":[1,0,0,1,0,0,1,0,1,0,0,1,0,0,1,0], "Open Hat":[0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0], "Crash":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] } },
+  "Classic Trance": { bpm:130, swing:0.6, recipe:{ src:4, len:90, str:1, shape:3, atk:1, flip:-1 }, tracks:{
+    "Kick":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], "Snare":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], "Clos Hat":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    "Open Hat":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1], "Clap":[0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0], "Noise":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0] } },
+  "Hardstyle EDM": { bpm:132, swing:0.5, recipe:{ src:8, len:330, str:1, shape:3, atk:2, flip:1, sens:0.5 }, tracks:{
+    "Kick":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Snap":[0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0], "Clap":[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+    "Hi-Hat":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Ride":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Perc":[0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0] } },
+  "Jack \u00DC EDM": { bpm:134, swing:0.6, recipe:{ src:9, len:900, str:1, shape:2, atk:2, flip:-1, sens:0.5, choke:true }, tracks:{
+    "Kick":[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], "Snare":[0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0], "Clos Hat":[1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1],
+    "Open Hat":[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0], "Shaker":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1], "Ride":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0] } },
+};
+const GENRE_KEYS = Object.keys(GENRES);
+// each part goes to an OP-1 tape track by what it is: T1 kick, T2 open hats and cymbals, T3 snares and claps, T4 the rest
+function tapeOf(name){ const k = name.toLowerCase();
+  if (k.includes('kick')) return 0;
+  if (k.includes('open') || k.includes('ride') || k.includes('crash')) return 1;
+  if (k.includes('snare') || k.includes('clap') || k.includes('snap') || k.includes('rim')) return 2;
+  return 3; }
+function voiceOf(name){ const k = name.toLowerCase();
+  return k.includes('kick') ? 'kick' : k.includes('open') ? 'ohat' : k.includes('ride') || k.includes('crash') ? 'ride'
+       : k.includes('ghost') ? 'ghost' : k.includes('snare') ? 'snare' : k.includes('clap') || k.includes('snap') ? 'clap'
+       : k.includes('rim') || k.includes('click') ? 'rim' : k.includes('shaker') || k.includes('tamb') ? 'shaker'
+       : k.includes('perc') || k.includes('conga') || k.includes('tom') ? 'perc' : k.includes('noise') ? 'noise' : 'chat'; }
+const GEN = { name:'', swing:0.5, parts:[] };      // parts: {name, tape, voice, steps[16]}
+function loadGenre(name){
+  const g = GENRES[name]; GEN.name = name; GEN.swing = g.swing;
+  GEN.parts = Object.entries(g.tracks).map(([n, st]) => ({ name:n, tape:tapeOf(n), voice:voiceOf(n), steps:[...st] }))
+                  .sort((a, b) => a.tape - b.tape);
+  P.bpm = g.bpm; $('bpm').value = g.bpm; $('bpmv').textContent = g.bpm;
+  if ($('recipe').checked) applyRecipe(g.recipe);
+  document.querySelectorAll('#genres button').forEach(b => b.classList.toggle('on', b.textContent === name));
+  $('ginfo').textContent = name + ' · ' + g.bpm + ' BPM · swing ' + Math.round(g.swing * 100) + '%';
+  sizeGrid();
+}
+function applyRecipe(r){
+  P.src = r.src; P.len = r.len; P.str = r.str; P.shape = r.shape; P.atk = r.atk; P.flip = r.flip;
+  if (r.sens !== undefined) P.sens = r.sens;
+  P.choke = !!r.choke; $('chk').classList.toggle('on', P.choke);
+  for (let i = 0; i < 4; i++) bindKnob(i);
+}
+
+// ---------- audio: the beat on four tape tracks, a pad (or a self-triggering arp) through Duck Call ----------
+let ctx = null, node = null;
+function startAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const sr = ctx.sampleRate;
+  node = ctx.createScriptProcessor(1024, 0, 2);
+  const chords = [[220,261.63,329.63,392],[174.61,220,261.63,329.63]];
+  const arpN = [440,523.25,659.25,523.25,392,523.25,587.33,493.88];
+  const ph = new Float64Array(8);
+  let n = 0, lp1 = 0, lp2 = 0, pos16 = 0, lastStep = -1, lastPulse = -1, barPos = 0;
+  let arpT = 1e9, arpF = 440, arpPh = 0, arpLp = 0;
+  let env = 0, dec = 0, depth = 0, g = 1;
+  const voices = [];                               // the drum voices sounding now
+  let nz1 = 0, nz2 = 0;
+
+  function fire(vel) {
+    const down = barPos < 0.01 || barPos > 0.99;
+    const miss = !isBeatSrc(P.src) && vel < (1 - P.sens) * 0.6;   // sensitivity: quieter hits are ignored
+    if (V.events.length < 64) V.events.push({ t: n / sr, vel, miss, down });
+    if (miss) return;
+    const d = strengthOf(P.str) * vel;
+    if (d > depth * env) {
+      depth = d; env = 1;
+      const durS = (P.len / 1000) * (0.25 + 0.75 * d);
+      dec = 1 / Math.max(64, durS * sr);
+    }
+    V.flashT = n / sr;
+  }
+  function choke() {                               // PercAll's choke: the partner ends the current dip or gate
+    if (env > 0) { env = 0; if (V.events.length < 64) V.events.push({ t: n / sr, choke: true }); }
+  }
+  function drum(v, vel) {
+    if (v === 'kick') { for (const x of voices) if (x.v === 'kick') x.t = 1e9; }
+    if (v === 'chat') { for (const x of voices) if (x.v === 'ohat') x.t = 1e9; }   // a closed hat chokes the open one
+    voices.push({ v, vel, t: 0, ph: 0, lp: 0, f: v === 'perc' ? 160 + Math.random() * 120 : 0 });
+    if (voices.length > 24) voices.shift();
+  }
+  function drumSample() {
+    let out = 0;
+    for (let i = voices.length - 1; i >= 0; i--) {
+      const x = voices[i], t = x.t / sr; let s = 0;
+      const nz = Math.random() * 2 - 1;
+      switch (x.v) {
+        case 'kick': x.ph += (45 + 120 * Math.exp(-t * 32)) / sr; s = Math.sin(2 * Math.PI * x.ph) * Math.exp(-t * 7) * 0.95; if (t > 0.5) x.t = 1e9; break;
+        case 'snare': case 'ghost': { x.ph += 190 / sr; x.lp += (nz - x.lp) * 0.6;
+          s = (Math.sin(2 * Math.PI * x.ph) * Math.exp(-t * 30) * 0.35 + (nz - x.lp * 0.5) * Math.exp(-t * 16) * 0.5) * (x.v === 'ghost' ? 0.35 : 1); if (t > 0.3) x.t = 1e9; break; }
+        case 'clap': { const e = t < 0.03 ? Math.exp(-((t * 1000) % 10) / 3) : Math.exp(-(t - 0.03) * 22); x.lp += (nz - x.lp) * 0.35; s = (nz - x.lp) * e * 0.6; if (t > 0.25) x.t = 1e9; break; }
+        case 'chat': x.lp += (nz - x.lp) * 0.6; s = (nz - x.lp) * Math.exp(-t * 70) * 0.35; if (t > 0.08) x.t = 1e9; break;
+        case 'ohat': x.lp += (nz - x.lp) * 0.6; s = (nz - x.lp) * Math.exp(-t * 9) * 0.28; if (t > 0.45) x.t = 1e9; break;
+        case 'ride': x.lp += (nz - x.lp) * 0.7; s = (nz - x.lp) * Math.exp(-t * 4) * 0.16; if (t > 0.9) x.t = 1e9; break;
+        case 'shaker': x.lp += (nz - x.lp) * 0.5; s = (nz - x.lp) * (t < 0.01 ? t / 0.01 : Math.exp(-(t - 0.01) * 60)) * 0.2; if (t > 0.08) x.t = 1e9; break;
+        case 'rim': x.ph += 520 / sr; s = Math.sin(2 * Math.PI * x.ph) * Math.exp(-t * 90) * 0.35; if (t > 0.05) x.t = 1e9; break;
+        case 'perc': x.ph += (x.f * (1 + Math.exp(-t * 25))) / sr; s = Math.sin(2 * Math.PI * x.ph) * Math.exp(-t * 14) * 0.45; if (t > 0.3) x.t = 1e9; break;
+        case 'noise': x.lp += (nz - x.lp) * 0.3; s = nz * Math.exp(-t * 3) * 0.08; if (t > 1) x.t = 1e9; break;
+      }
+      out += s * x.vel; x.t++;
+      if (x.t >= 1e9) voices.splice(i, 1);
+    }
+    return out;
+  }
+
+  node.onaudioprocess = e => {
+    const L = e.outputBuffer.getChannelData(0), R = e.outputBuffer.getChannelData(1);
+    const spb = sr * 60 / P.bpm, s16 = spb / 4, bar = spb * 4, pair = s16 * 2;
+    const hit = P.src === SELF, isBeat = isBeatSrc(P.src);
+    const atk = 1 / (Math.max(0.2, P.atk) / 1000 * sr);
+    const w = (1 - P.flip) / 2;                 // flip: 0 = duck, 1 = gate
+    const srcTape = trackN(P.src) - 1, chokeTape = trackN(chokeOf(P.src)) - 1;
+    for (let i = 0; i < L.length; i++, n++) {
+      pos16 += 1; if (pos16 >= bar) pos16 -= bar;           // where we are in the bar (tempo changes stay smooth)
+      barPos = pos16 / bar;
+      const pi = Math.floor(pos16 / pair), inPair = pos16 - pi * pair;
+      const step = pi * 2 + (inPair >= GEN.swing * pair ? 1 : 0);   // swing pushes every second 16th late
+      if (step !== lastStep) {
+        lastStep = step; V.step = step;
+        const vels = [0, 0, 0, 0];
+        for (const part of GEN.parts) if (part.steps[step]) {
+          const vel = step % 4 === 0 ? 1 : step % 2 === 0 ? 0.8 : 0.62;
+          drum(part.voice, vel);
+          if (part.voice !== 'noise') vels[part.tape] = Math.max(vels[part.tape], part.tape === 0 && step % 8 ? vel * 0.8 : vel);
+        }
+        if (!hit && !isBeat) {
+          const v = P.src === 12 ? Math.max(...vels) : P.src === 13 ? vels[0] : vels[srcTape];   // tape hears all four, in hears the kick
+          if (v > 0) fire(v);
+        }
+        if (P.choke && vels[chokeTape] > 0 && chokeTape !== srcTape) choke();
+        if (hit && step % 2 === 0) { arpT = 0; arpF = arpN[(step / 2) % 8 | 0]; fire(0.9); }
+      }
+      if (isBeat) {
+        const div = DIVS[P.src], pulse = Math.floor(pos16 / (bar / div));
+        if (pulse !== lastPulse) {
+          lastPulse = pulse;
+          const k = pulse, onBeat = (k * 4) % div === 0;          // accent: 1 hard, beats softer, in-betweens softest
+          fire(k === 0 ? 1 : onBeat ? 1 - P.sens * 0.7 : 1 - P.sens);   // at 100% only the 1 is left
+        }
+      }
+      // pad: detuned saws, two one-pole lowpasses
+      const ch = chords[Math.floor(n / bar) % 2];
+      let pad = 0;
+      for (let k = 0; k < 4; k++) for (let d = 0; d < 2; d++) {
+        const j = k*2 + d; ph[j] += ch[k] * (d ? 1.006 : 0.994) / sr; ph[j] -= Math.floor(ph[j]); pad += 2*ph[j] - 1;
+      }
+      lp1 += (pad - lp1) * 0.06; lp2 += (lp1 - lp2) * 0.06;
+      let arp = 0;
+      if (arpT < s16 * 2 * 0.8) { arpPh += arpF / sr; arpPh -= Math.floor(arpPh); const s = (arpPh < 0.5 ? 1 : -1) * 0.6 + (2*arpPh - 1) * 0.4; arpLp += (s - arpLp) * 0.15; arp = arpLp; }
+      arpT++;
+      const drums = drumSample();
+      // Duck Call: envelope, shape, gain slew
+      const f = depth * shapeOf(env, P.shape);
+      env = env > dec ? env - dec : 0;
+      let gt = (1 - w) * (1 - f) + w * f;
+      if (P.bypass) gt = 1;
+      const dg = gt - g; g += dg > atk ? atk : dg < -atk ? -atk : dg;
+      if (g < V.gainMin) V.gainMin = g;
+      const inst = hit ? arp * 0.22 : lp2 * 0.16;
+      const out = inst * g + drums * 0.5;
+      L[i] = out; R[i] = out;
+    }
+    V.gain = g;
+  };
+  node.connect(ctx.destination);
+  V.playing = true;
+}
+$('play').addEventListener('click', async () => {
+  try {
+    if (!ctx) startAudio();
+    else if (ctx.state === 'running') { await ctx.suspend(); V.playing = false; }
+    else { await ctx.resume(); V.playing = true; }
+    $('play').textContent = V.playing ? 'Stop' : 'Play';
+  } catch (err) { $('play').textContent = 'Audio unavailable'; }
+});
+
+// ---------- the drum grid, in Duck Call's style ----------
+const gcv = $('grid'), gc = gcv.getContext('2d');
+const TCOL = ['#698EFF', '#00ED95', '#FFFFFF', '#FF3A5D'], TIND = '#383572';
+const GL = { lab:118, top:6, row:22, gap:10 };    // layout, CSS px
+let gW = 0, gH = 0, gDpr = 1;
+function sizeGrid(){
+  gDpr = window.devicePixelRatio || 1; gW = gcv.clientWidth || 900;
+  const groups = new Set(GEN.parts.map(p => p.tape)).size;
+  gH = GL.top * 2 + GEN.parts.length * GL.row + (groups - 1) * GL.gap;
+  gcv.style.height = gH + 'px'; gcv.width = Math.round(gW * gDpr); gcv.height = Math.round(gH * gDpr);
+}
+function rowsLayout(){
+  const out = []; let y = GL.top, prev = -1;
+  for (const p of GEN.parts) { if (prev >= 0 && p.tape !== prev) y += GL.gap; out.push({ p, y }); y += GL.row; prev = p.tape; }
+  return out;
+}
+function cellW(){ return (gW - GL.lab - 4) / 16; }
+gcv.addEventListener('click', e => {
+  const r = gcv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  const s = Math.floor((x - GL.lab) / cellW()); if (s < 0 || s > 15) return;
+  for (const { p, y: ry } of rowsLayout()) if (y >= ry && y < ry + GL.row) { p.steps[s] ^= 1; break; }
+});
+window.addEventListener('resize', sizeGrid);
+function drawGrid(){
+  gc.setTransform(gDpr, 0, 0, gDpr, 0, 0);
+  gc.fillStyle = '#000'; gc.fillRect(0, 0, gW, gH);
+  const cw = cellW(), playing = V.playing && ctx && ctx.state === 'running', cur = playing ? V.step : -1;
+  const srcT = trackN(P.src) - 1, chkT = P.choke ? trackN(chokeOf(P.src)) - 1 : -9;
+  const tapeHit = t => P.src === 12 || (P.src === 13 && t === 0) || srcT === t;
+  let lastTape = -1;
+  for (const { p, y } of rowsLayout()) {
+    const col = TCOL[p.tape], cy = y + GL.row / 2;
+    if (p.tape !== lastTape) {                      // the tape track's name, with the sight or the choke mark
+      lastTape = p.tape;
+      gc.font = '600 12px ui-monospace, Menlo, monospace'; gc.fillStyle = col; gc.textBaseline = 'middle'; gc.fillText('T' + (p.tape + 1), 6, cy);
+      if (tapeHit(p.tape)) { gc.strokeStyle = '#FF3A5D'; gc.lineWidth = 1.6; gc.beginPath(); gc.arc(40, cy, 5, 0, 7);
+        gc.moveTo(33, cy); gc.lineTo(36, cy); gc.moveTo(44, cy); gc.lineTo(47, cy); gc.moveTo(40, cy - 7); gc.lineTo(40, cy - 4); gc.moveTo(40, cy + 4); gc.lineTo(40, cy + 7); gc.stroke(); }
+      else if (chkT === p.tape) { gc.strokeStyle = '#FF3A5D'; gc.lineWidth = 1.8; gc.beginPath(); gc.moveTo(35, cy - 5); gc.lineTo(45, cy + 5); gc.moveTo(35, cy + 5); gc.lineTo(45, cy - 5); gc.stroke(); }
+    }
+    gc.font = '11px ui-monospace, Menlo, monospace'; gc.fillStyle = '#8B8B96'; gc.fillText(p.name.toUpperCase(), 54, cy);
+    for (let s = 0; s < 16; s++) {
+      const x = GL.lab + s * cw + 2, w = cw - 4, h = GL.row - 7, yy = y + 3.5, on = p.steps[s], now = s === cur;
+      gc.lineWidth = 1.2;
+      if (on) { gc.fillStyle = now ? col : col + (s % 4 === 0 ? 'CC' : '88'); gc.fillRect(x, yy, w, h); }
+      gc.strokeStyle = now ? '#FFFFFF' : on ? col : s % 4 === 0 ? '#4b4890' : TIND; gc.strokeRect(x + .5, yy + .5, w - 1, h - 1);
+    }
+  }
+  if (cur >= 0) { const x = GL.lab + cur * cw + cw / 2; gc.strokeStyle = '#A3A5A8'; gc.lineWidth = 1; gc.beginPath(); gc.moveTo(x, 1); gc.lineTo(x, 4); gc.moveTo(x, gH - 4); gc.lineTo(x, gH - 1); gc.stroke(); }
+  requestAnimationFrame(drawGrid);
+}
+GENRE_KEYS.forEach(name => { const b = document.createElement('button'); b.textContent = name; b.addEventListener('click', () => loadGenre(name)); $('genres').appendChild(b); });
+
+function flipText(f){ return f >= 0.99 ? 'duck' : f <= -0.99 ? 'gate' : Math.abs(f) < 0.02 ? 'flat' : (f > 0 ? 'duck ' : 'gate ') + Math.round(Math.abs(f)*100) + '%'; }
+// [page 1, page 2] per knob: name, min, max, step, get, set, text
+const KN = [
+  [ ['Blue: length',15,2000,1, () => P.len, x => P.len = x, () => P.len + ' ms'],
+    ['Blue press: attack',2,1000,1, () => Math.round(P.atk*10), x => P.atk = x/10, () => P.atk.toFixed(1) + ' ms'] ],
+  [ ['Green: strength',0,100,1, () => Math.round(P.str*100), x => P.str = x/100, () => Math.round(strengthOf(P.str)*100) + '% deep'],
+    [() => isBeatSrc(P.src) ? 'Green press: accent' : 'Green press: sensitivity',0,100,1, () => Math.round(P.sens*100), x => P.sens = x/100, () => Math.round(P.sens*100) + '%'] ],
+  [ ['White: shape',0,3,1, () => P.shape, x => P.shape = x, () => SH[P.shape]],
+    ['White press: flip (gate to duck)',-100,100,1, () => Math.round(P.flip*100), x => P.flip = x/100, () => flipText(P.flip)] ],
+  [ ['Red: source',0,14,1, () => P.src, x => P.src = x, () => SRC[P.src]] ],
+];
+function bindKnob(i){
+  const el = $('k'+i), d = KN[i][i < 3 ? P.page[i] : 0];
+  $('n'+i).textContent = typeof d[0] === 'function' ? d[0]() : d[0]; el.min = d[1]; el.max = d[2]; el.step = d[3]; el.value = d[4](); $('v'+i).textContent = d[6]();
+}
+for (let i = 0; i < 4; i++) {
+  $('k'+i).addEventListener('input', e => { const d = KN[i][i < 3 ? P.page[i] : 0]; d[5](+e.target.value); $('v'+i).textContent = d[6](); if (i === 3) bindKnob(1); });
+  bindKnob(i);
+}
+document.querySelectorAll('button.press[data-k]').forEach(b => b.addEventListener('click', () => {
+  const i = +b.dataset.k; P.page[i] ^= 1; b.classList.toggle('on', !!P.page[i]); bindKnob(i);
+}));
+$('chk').addEventListener('click', () => { P.choke = !P.choke; $('chk').classList.toggle('on', P.choke); });
+$('bpm').addEventListener('input', e => { P.bpm = +e.target.value; $('bpmv').textContent = P.bpm; });
+$('bypass').addEventListener('change', e => { P.bypass = e.target.checked; });
+
+function shapeOf(ph, s) { const u = 1 - ph; return s===0 ? ph*ph : s===1 ? ph : s===2 ? 1-u*u : 1-u*u*u*u; }
+
+
+// ---------- screen ----------
+const cv = $('scr'), c = cv.getContext('2d');
+c.setTransform(3,0,0,3,0,0);
+const B='#698EFF',G='#00ED95',W='#FFFFFF',R='#FF3A5D',IND='#383572',GR='#6F7173',GRL='#A3A5A8',BK='#000';
+const DIAG=[-Math.PI/4,Math.PI/4,3*Math.PI/4,-3*Math.PI/4];
+const A0=Math.PI*0.75, A1=Math.PI*2.25;
+let chokeT=-9, wph=0, prevT=0, chase=0, lastFlash=-1, aim=0, muzzle=null, bulbFlash=-1, splashSlot=0, wob=null, dodge=-1, stars=[], wasDown=[0,0,0,0,0,0];
+const hitT=[-9,-9,-9,-9,-9,-9], hitD=[0,0,0,0,0,0], sink=[0,0,0,0,0,0]; let rot=0;
+const REACT=0.06;   // the duck reacts 60 ms after the shot (screen only, the audio is not delayed)   // per duck: when it was hit, how hard
+const kv=[0,0,0,0];
+function Ln(col,w){c.strokeStyle=col;c.lineWidth=w||2;c.lineCap='round';c.lineJoin='round';}
+function curve(p){return shapeOf(p,P.shape);}
+
+function reticle(cx,cy,i,col,lit){Ln(col,2);c.save();c.translate(cx,cy);c.beginPath();
+  if(i===SELF){c.arc(0,0,3,0,7);c.moveTo(0,-12);c.lineTo(0,-6);c.moveTo(-6,-13);c.lineTo(6,-13);}
+  else if(trackN(i)){const t=trackN(i);c.arc(0,0,9,0,7);c.moveTo(-13,0);c.lineTo(-4,0);c.moveTo(4,0);c.lineTo(13,0);c.moveTo(0,-13);c.lineTo(0,-4);c.moveTo(0,4);c.lineTo(0,13);
+    for(let q=0;q<t;q++){const a=DIAG[q];c.moveTo(Math.cos(a)*9,Math.sin(a)*9);c.lineTo(Math.cos(a)*14,Math.sin(a)*14);}}
+  else if(i===12){c.arc(0,0,10,0,7);for(let q=0;q<3;q++){const a=q*Math.PI*2/3-Math.PI/2;c.moveTo(Math.cos(a)*3,Math.sin(a)*3);c.lineTo(Math.cos(a)*10,Math.sin(a)*10);}c.moveTo(3,0);c.arc(0,0,3,0,7);}
+  else if(i===13){c.moveTo(-14,4);c.lineTo(-5,4);c.lineTo(0,-5);c.lineTo(5,4);c.lineTo(14,4);c.moveTo(0,8);c.lineTo(0,10);}
+  else{const div=DIVS[i],r=10;c.arc(0,0,r,0,7);c.stroke();
+    const per=div%4===0?div/4:div/2;
+    for(let q=0;q<div;q++){const a=-Math.PI/2+q*2*Math.PI/div,major=div<=4||q%per===0,l=major?5:3;Ln(q===lit?W:col,div>=24?1.4:2);c.beginPath();c.moveTo(Math.cos(a)*r,Math.sin(a)*r);c.lineTo(Math.cos(a)*(r+l),Math.sin(a)*(r+l));c.stroke();}
+    Ln(col,2);c.beginPath();c.arc(0,0,1.2,0,7);c.stroke();c.restore();return;}
+  c.stroke();c.restore();}
+
+function duck(x,base,s,col,up,rot,lift){const y=(up?base:base+18*s)-(lift||0);c.save();c.translate(x,y);if(rot)c.rotate(rot);c.scale(s,s);
+  Ln(GR,1.5);c.beginPath();c.moveTo(0,1);c.lineTo(0,30);c.stroke();
+  c.beginPath();c.moveTo(-12,-9);c.quadraticCurveTo(-14,-13,-11,-15);c.quadraticCurveTo(-10,-10,-6,-9);c.quadraticCurveTo(-1,-10,1,-11);c.lineTo(9,-9);c.quadraticCurveTo(13,-6,11,-2);c.quadraticCurveTo(8,1,0,1);c.lineTo(-7,1);c.quadraticCurveTo(-13,0,-12,-9);c.closePath();
+  c.fillStyle=BK;c.fill();Ln(col,1.8);c.stroke();
+  c.beginPath();c.moveTo(9,-17);c.quadraticCurveTo(14,-17,15,-15);c.quadraticCurveTo(14,-13,9,-14);c.closePath();c.fill();c.stroke();
+  c.beginPath();c.arc(4,-16,5.5,0,7);c.fill();c.stroke();
+  c.fillStyle=col;c.beginPath();c.arc(5.5,-17.5,1,0,7);c.fill();
+  c.beginPath();c.moveTo(-5,-6);c.quadraticCurveTo(-1,-3,4,-6);c.stroke();
+  c.restore();}
+
+function cloud(cx,cy){Ln(IND,1);c.beginPath();c.moveTo(cx,30);c.lineTo(cx,cy-9);c.stroke();
+  c.beginPath();c.moveTo(cx-15,cy+5);c.arc(cx-9,cy+1,6.5,Math.PI*0.7,Math.PI*1.75);c.arc(cx+1,cy-3,8,Math.PI*1.05,Math.PI*1.95);c.arc(cx+11,cy+1,6,Math.PI*1.25,Math.PI*2.35);c.lineTo(cx-15,cy+5);c.closePath();
+  c.fillStyle=BK;c.fill();Ln(IND,1.2);c.stroke();}
+
+function waveF(u){const k=1-Math.min(1,Math.max(0,Math.log(P.atk/0.2)/Math.log(500)));   // attack 0.2 ms: k 1 (choppy) .. 100 ms: k 0 (smooth)
+  const sharp=1-Math.abs(Math.cos(u)),smooth=Math.sin(u)*Math.sin(u);return k*sharp+(1-k)*smooth;}
+function wavePath(y,amp,off,period){c.beginPath();for(let x=-4;x<=324;x+=2){const yy=y-waveF((x+off)/period*Math.PI)*amp;x===-4?c.moveTo(x,yy):c.lineTo(x,yy);}}
+function wave(y,amp,off,w,period){wavePath(y,amp,off,period);c.lineTo(324,106);c.lineTo(-4,106);c.closePath();c.fillStyle=BK;c.fill();Ln(B,w);wavePath(y,amp,off,period);c.stroke();}
+
+const TOP=6,TIE=66,BOT=104;
+function edgeX(y){const close=P.shape/3,Wd=32+close*10,tieX=12+close*3;
+  if(y<=TIE){const t=(y-TOP)/(TIE-TOP);return tieX+Wd*curve(1-t);}
+  const u=(y-TIE)/(BOT-TIE),p0=tieX,p1=tieX+4,p2=28+close*6;return (1-u)*(1-u)*p0+2*(1-u)*u*p1+u*u*p2;}
+function curtain(side){const m=side<0?(x=>x):(x=>320-x);
+  c.beginPath();c.moveTo(m(0),TOP);for(let y=TOP;y<=BOT;y+=2)c.lineTo(m(edgeX(y)),y);c.lineTo(m(0),BOT);c.closePath();c.fillStyle=BK;c.fill();
+  Ln(IND,1.2);for(const f of [0.3,0.55,0.8]){c.beginPath();for(let y=TOP+2;y<=BOT;y+=2){const ex=edgeX(y),pinch=(y>TIE-4&&y<TIE+6)?0.6:1,x=ex*f*pinch+(1-pinch)*ex*0.5*f;y===TOP+2?c.moveTo(m(x),y):c.lineTo(m(x),y);}c.stroke();}
+  Ln(P.page[2]?GRL:W,2);c.beginPath();for(let y=TOP;y<=BOT;y+=2){y===TOP?c.moveTo(m(edgeX(y)),y):c.lineTo(m(edgeX(y)),y);}c.stroke();   // white = shape on page 1
+  Ln(GRL,2);const tx=edgeX(TIE);c.beginPath();c.moveTo(m(0),TIE);c.quadraticCurveTo(m(tx*0.6),TIE+4,m(tx+2),TIE-1);c.stroke();}
+
+function rifle(k){c.save();c.transform(1,0,-k,1,k*162,0);rifleBody();c.restore();}
+function rifleBody(){const RC=P.page[2]?W:GRL;  /* white = flip on page 2 */ const cx=160,yt=96,yb=162;
+  c.beginPath();c.moveTo(cx-36,yb);c.lineTo(cx-6,yt+6);c.lineTo(cx+6,yt+6);c.lineTo(cx+36,yb);c.closePath();c.fillStyle=BK;c.fill();
+  Ln(RC,2.2);c.beginPath();c.moveTo(cx-18,yb);c.lineTo(cx-4,yt+4);c.lineTo(cx+4,yt+4);c.lineTo(cx+18,yb);c.stroke();
+  Ln(GR,1.2);c.beginPath();c.moveTo(cx,yb);c.lineTo(cx,yt+6);c.stroke();
+  Ln(RC,2);c.beginPath();c.moveTo(cx-1.5,yt+4);c.lineTo(cx-1,yt-2);c.lineTo(cx+1,yt-2);c.lineTo(cx+1.5,yt+4);c.stroke();
+  Ln(RC,2);c.beginPath();c.moveTo(cx-10,yt+30);c.lineTo(cx-10,yt+24);c.lineTo(cx-4,yt+24);c.lineTo(cx-2,yt+28);c.lineTo(cx+2,yt+28);c.lineTo(cx+4,yt+24);c.lineTo(cx+10,yt+24);c.lineTo(cx+10,yt+30);c.stroke();
+  Ln(RC,2.2);c.beginPath();c.moveTo(cx-36,yb);c.lineTo(cx-26,yt+34);c.lineTo(cx-19,yt+32);c.moveTo(cx+36,yb);c.lineTo(cx+26,yt+34);c.lineTo(cx+19,yt+32);c.stroke();
+  Ln(GR,1);c.beginPath();c.moveTo(cx-29,yb);c.lineTo(cx-23,yt+37);c.moveTo(cx+29,yb);c.lineTo(cx+23,yt+37);c.stroke();}
+
+function knob(x,y,f,col,steps,txt,p2,bip){const r=9;
+  Ln(IND,2);c.beginPath();c.arc(x,y,r+4.5,A0,A1);c.stroke();
+  if(bip){const mid=(A0+A1)/2,a=A0+(A1-A0)*f;Ln(col,2);c.beginPath();c.arc(x,y,r+4.5,Math.min(mid,a),Math.max(mid,a)+0.001);c.stroke();
+    Ln(GR,1);c.beginPath();c.moveTo(x,y-r-7);c.lineTo(x,y-r-11);c.stroke();}
+  else if(!steps){Ln(col,2);c.beginPath();c.arc(x,y,r+4.5,A0,A0+(A1-A0)*Math.max(0.001,f));c.stroke();
+    Ln(GR,1);c.beginPath();for(let i=0;i<=10;i++){const a=A0+(A1-A0)*i/10;c.moveTo(x+Math.cos(a)*(r+7),y+Math.sin(a)*(r+7));c.lineTo(x+Math.cos(a)*(r+9),y+Math.sin(a)*(r+9));}c.stroke();}
+  else{for(let i=0;i<steps;i++){const a=A0+(A1-A0)*i/(steps-1),on=Math.round(f*(steps-1))===i;Ln(on?col:GR,on?2:1);c.beginPath();c.moveTo(x+Math.cos(a)*(r+6.5),y+Math.sin(a)*(r+6.5));c.lineTo(x+Math.cos(a)*(r+(on?11:9)),y+Math.sin(a)*(r+(on?11:9)));c.stroke();}}
+  Ln(GRL,1.6);c.beginPath();c.arc(x,y,r,0,7);c.stroke();
+  if(p2){Ln(col,1.5);c.beginPath();c.arc(x,y,6,0,7);c.stroke();}            // page 2: a ring inside the knob
+  const a=A0+(A1-A0)*f;Ln(col,2.2);c.beginPath();c.moveTo(x+Math.cos(a)*3,y+Math.sin(a)*3);c.lineTo(x+Math.cos(a)*8,y+Math.sin(a)*8);c.stroke();
+  c.font='bold 8px ui-monospace, Menlo, monospace';c.textAlign='center';c.textBaseline='middle';
+  let tw=c.measureText(txt).width;const sc=Math.min(1,44/tw);c.save();c.translate(x,y+26);c.scale(sc,1);
+  if(p2){c.fillStyle=col;c.fillRect(-tw/2-2.5,-5,tw+5,10);c.fillStyle=BK;}else c.fillStyle=col;   // page 2: the value on a chip
+  c.fillText(txt,0,0.5);c.restore();c.textAlign='left';c.textBaseline='alphabetic';}
+
+const STROKES={D:[[[0,0],[3,0],[4,1],[4,5],[3,6],[0,6],[0,0]]],U:[[[0,0],[0,6],[4,6],[4,0]]],C:[[[4,0],[0,0],[0,6],[4,6]]],
+  K:[[[0,0],[0,6]],[[4,0],[0,3],[4,6]]],A:[[[0,6],[0,0],[4,0],[4,6]],[[0,3],[4,3]]],L:[[[0,0],[0,6],[4,6]]]};
+function title(){const S=1.8,w=(9*6-2)*S,ox=160-w/2,oy=11.5;           // the OP-1's stroke font, as on the device
+  for(const [col,dx] of [[IND,1.3],[GRL,0]]){Ln(col,1.8);c.lineCap='butt';c.lineJoin='miter';c.beginPath();
+    [...'DUCK CALL'].forEach((ch,i)=>(STROKES[ch]||[]).forEach(run=>run.forEach(([px,py],j)=>{const X=ox+dx+(i*6+px)*S,Y=oy+dx+py*S;j?c.lineTo(X,Y):c.moveTo(X,Y);})));c.stroke();}}
+function marquee(on,all){title();
+  Ln(GR,1);c.beginPath();c.moveTo(124,25.5);c.lineTo(196,25.5);c.moveTo(124,6.5);c.lineTo(196,6.5);c.stroke();
+  const bulbs=[];for(let i=0;i<10;i++)bulbs.push([122+i*8.5,34]);for(let i=0;i<5;i++)bulbs.push([18+i*20,12]);for(let i=0;i<5;i++)bulbs.push([222+i*20,12]);
+  bulbs.forEach(([x,y],i)=>{const lit=all||(on&&(i%3)===(chase%3));Ln(lit?GRL:GR,lit?1.8:1.2);c.beginPath();c.arc(x,y,lit?2:1.6,0,7);c.stroke();});}
+
+function frame(t){
+  const dt=Math.min(50,t-prevT||0);prevT=t;
+  const playing=V.playing&&ctx&&ctx.state==='running';
+  const now=playing?ctx.currentTime:0;
+  const amt=playing?1-V.gainMin:0;V.gainMin=V.gain;
+  const flash=playing&&now-V.flashT<0.09&&now>=V.flashT;
+  while(V.events.length&&V.events[0].t<=now){const e=V.events.shift();
+    if(e.choke){chokeT=e.t;for(let i=0;i<6;i++)hitT[i]=-9;}
+    else if(e.miss){dodge=e.t;}
+    else{wob={t0:e.t,a:0.08+0.22*e.vel,side:(splashSlot++%2)?1:-1};muzzle={t0:e.t,big:e.down};if(e.down)bulbFlash=e.t;
+      const d=strengthOf(P.str)*e.vel;
+      if(e.down){hitT[0]=hitT[1]=e.t;hitD[0]=hitD[1]=d;stars.push({id:0,t0:e.t+REACT,s:d},{id:1,t0:e.t+REACT,s:d});}   // the 1: the back pair
+      else{const id=2+(rot++%4);hitT[id]=e.t;hitD[id]=d;stars.push({id,t0:e.t+REACT,s:d});}}}                     // other hits take turns along the front row
+  if(!playing){muzzle=null;wob=null;dodge=-1;for(let i=0;i<6;i++)hitT[i]=-9;}
+  if(playing&&V.flashT!==lastFlash){lastFlash=V.flashT;chase++;}
+  if(playing)wph+=dt*0.0025*(300/Math.max(60,P.len));
+  const isBeat=isBeatSrc(P.src);let lit=-1;
+  if(playing&&isBeat){const div=DIVS[P.src],bar=240/P.bpm;lit=Math.floor(now/(bar/div))%div;}
+  const tgt=[P.page[0]?Math.sqrt((P.atk-0.2)/99.8):Math.sqrt((P.len-15)/1985), P.page[1]?P.sens:P.str, P.page[2]?(P.flip+1)/2:P.shape/3, P.src/14];
+  for(let i=0;i<4;i++)kv[i]+=(tgt[i]-kv[i])*0.3;
+
+  c.clearRect(0,0,320,160);c.fillStyle=BK;c.fillRect(0,0,320,160);
+  c.save();c.beginPath();c.rect(60,9,200,43);c.clip();   // the rays stay above the ducks, as on the device
+  Ln(IND,1);c.beginPath();for(let i=0;i<14;i++){const a=Math.PI+i*Math.PI/13;c.moveTo(160+Math.cos(a)*30,98+Math.sin(a)*30);c.lineTo(160+Math.cos(a)*170,98+Math.sin(a)*170);}c.stroke();c.restore();
+  cloud(86,46);cloud(236,42);
+  const sw1=Math.sin(wph)*5,sw2=Math.sin(wph+Math.PI)*5;
+  const wGate=(1-P.flip)/2, mode=wGate>0.55?'gate':wGate<0.45?'duck':'flat';
+  const env=id=>{const te=now-REACT-hitT[id],d=hitD[id],dur=(P.len/1000)*(0.25+0.75*d);if(te<0||te>dur)return 0;return d*shapeOf(1-te/dur,P.shape);};
+  const isDown=id=>{if(!playing)return false;const on=env(id)>0.2;return mode==='duck'?on:mode==='gate'?!on:false;};
+  const GD=G;
+  const wt=wob?now-wob.t0:9,wr=wob&&wt>=0&&wt<0.35?wob.a*Math.sin(wt*38)*Math.exp(-wt*9):0;          // hit: the standing ducks wobble
+  const dt2=now-dodge,dr=dt2>=0&&dt2<0.25?Math.sin(dt2/0.25*Math.PI):0;                                  // miss: the ducks duck
+  const hop=now-bulbFlash>=0&&now-bulbFlash<0.12?Math.sin((now-bulbFlash)/0.12*Math.PI)*3:0;           // the 1: a hop
+  const fdt=Math.min(0.05,dt/1000);
+  const react=(id)=>{const d=isDown(id),tgt=d?1:0;
+    const fast=0.07,slow=0.18,dn=mode==='gate'?slow:fast,upT=mode==='gate'?fast:slow;   // the reaction is quick, the return is slow
+    sink[id]+= tgt>sink[id] ? Math.min(tgt-sink[id],fdt/dn) : Math.max(tgt-sink[id],-fdt/upT);
+    wasDown[id]=d;
+    const k=sink[id],stand=1-k;
+    return [(wr*(id%2?1:-1)-dr*0.3)*stand - k*0.45*(1-k)*2, (hop-dr*3)*stand - k*18*(id<2?0.72:0.95)];};
+  stars=stars.filter(p=>now-p.t0<0.22);
+  const POS=[[106,74,0.72],[214,74,0.72],[72,92,0.95],[124,92,0.95],[196,92,0.95],[250,92,0.95]];
+  const star=(p)=>{const a=(now-p.t0)/0.22;if(a<0||mode==='flat')return;const [x,b,sc]=POS[p.id];const r=(3+(4+5*p.s)*a)*sc,cx=x+4*sc,cy=b-17*sc;Ln(G,1.5);c.beginPath();for(let q=0;q<4;q++){const an=q*Math.PI/2+0.4;c.moveTo(cx+Math.cos(an)*r*0.45,cy+Math.sin(an)*r*0.45);c.lineTo(cx+Math.cos(an)*r,cy+Math.sin(an)*r);}c.stroke();};   // the ricochet
+  for(const [x,id] of [[106,0],[214,1]]){const [r,l]=react(id);duck(x,74,0.72,sink[id]>0.5?IND:GD,true,r,l);}
+  wave(80,9,sw1,1.5,32);
+  for(const [x,id] of [[72,2],[124,3],[196,4],[250,5]]){const [r,l]=react(id);duck(x,92,0.95,sink[id]>0.5?IND:GD,true,r,l);}
+  wave(97,11,sw2+16,2,40);
+  for(const p of stars)star(p);   // in front of the waves
+
+  Ln(GRL,2.5);c.beginPath();c.moveTo(0,104);c.lineTo(320,104);c.stroke();
+  c.fillStyle=BK;c.fillRect(0,105,320,60);
+  curtain(-1);curtain(1);
+  c.beginPath();c.moveTo(0,0);c.lineTo(320,0);c.lineTo(320,8);c.lineTo(222,8);c.quadraticCurveTo(216,30,200,30);c.lineTo(120,30);c.quadraticCurveTo(104,30,98,8);c.lineTo(0,8);c.closePath();c.fillStyle=BK;c.fill();
+  Ln(GRL,2.5);c.beginPath();c.moveTo(0,8);c.lineTo(98,8);c.quadraticCurveTo(104,30,120,30);c.lineTo(200,30);c.quadraticCurveTo(216,30,222,8);c.lineTo(320,8);c.stroke();
+  marquee(playing,playing&&now-bulbFlash<0.12&&now>=bulbFlash);
+  aim+=(P.flip-aim)*0.2;                       // flip aims the rifle: gate left, flat centre, duck right
+  const sx=aim*9, kk=sx/(162-60);               // sight moves at most 9 px, clear of the duck heads
+  const mz=muzzle&&now-muzzle.t0<(muzzle.big?0.14:0.08)&&now>=muzzle.t0;
+  c.save();if(mz)c.translate(0,muzzle.big?2:1);rifle(kk);c.restore();
+  if(mz){const tx=160+kk*(162-94),ty=93,R0=muzzle.big?9:5;Ln(R,1.6);c.beginPath();for(let q=0;q<7;q++){const an=-Math.PI/2+(q-3)*0.42,r1=R0*(q%2?0.55:1);c.moveTo(tx+Math.cos(an)*2,ty+Math.sin(an)*2);c.lineTo(tx+Math.cos(an)*r1,ty+Math.sin(an)*r1);}c.stroke();}
+  reticle(160+sx,60,P.src,(flash&&!isBeat)?W:R,lit);
+  if(playing&&now-chokeT>=0&&now-chokeT<0.14){Ln(R,2.4);c.beginPath();c.moveTo(146+sx,46);c.lineTo(174+sx,74);c.moveTo(146+sx,74);c.lineTo(174+sx,46);c.stroke();}   // a choke landed
+  const KY=114;
+  knob(44,KY,kv[0],B,0,P.page[0]?'ATK '+(P.atk<10?P.atk.toFixed(1):Math.round(P.atk)):Math.round(P.len)+'MS',P.page[0]);
+  knob(98,KY,kv[1],G,0,P.page[1]?(isBeat?'ACC ':'SEN ')+Math.round(P.sens*100)+'%':Math.round(strengthOf(P.str)*100)+'%',P.page[1]);
+  if(P.page[2])knob(222,KY,kv[2],W,0,flipText(P.flip).toUpperCase(),1,1);else knob(222,KY,kv[2],W,4,SH[P.shape].toUpperCase());
+  knob(276,KY,kv[3],R,15,(P.choke?SRC[P.src]+' CUT '+SRC[chokeOf(P.src)]:SRC[P.src]).toUpperCase(),P.choke);
+  requestAnimationFrame(frame);
+}
+
+loadGenre('Chicago House');
+requestAnimationFrame(drawGrid);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

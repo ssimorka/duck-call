@@ -1,0 +1,28 @@
+{
+  "name": "duckcall",
+  "kind": "fx",
+  "order": 0,
+  "symbol": "FX_duckcall",
+  "stereo": true,
+  "sources": [
+    "duckcall.c"
+  ],
+  "defaults": [
+    12000,
+    21533,
+    21845,
+    5120
+  ],
+  "page2_defaults": [
+    5500,
+    16384,
+    32767
+  ],
+  "loadable": true,
+  "claims": [],
+  "author": "Steph Simorka",
+  "screen": {
+    "svg": "duckcall.svg",
+    "symbol": "SCREEN_duckcall"
+  }
+}
