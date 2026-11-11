@@ -250,9 +250,12 @@ cc -O2 -Wall -fsanitize=address,undefined -I. -I$K \
   <div class="shead"><div class="num">3</div><div><h2>Build the .knl</h2><p>The OP-1 runs a Blackfin chip, so the final build needs a Blackfin cross compiler. Your computer's normal compiler can't make OP-1 code.</p></div></div>
   <div class="sub top">
     <div><h3><i>3.1</i>The compiler</h3>
-      <p>You need <code>bfin-elf-gcc</code> with libgcc. hundekraft 3.x uses GCC 13.3.0, and nobody ships it ready-made, so you build it once from GNU binutils 2.42 and GCC 13.3.0. <a href="https://github.com/ssimorka/duck-call/blob/main/tools/build-bfin-toolchain.sh">build-bfin-toolchain.sh</a> does it with the same options Duck Call's compiler used. It takes 30 to 60 minutes.</p>
-      <p class="note">On a Mac, do it in a Linux VM or container. If a build step stops halfway, run make again and it picks up where it left off.</p></div>
-    <pre class="code"><span class="c"># one script does it all (Linux or a Linux VM)</span>
+      <p>You need <code>bfin-elf-gcc</code> with libgcc. hundekraft 3.x uses GCC 13.3.0, and nobody ships it ready-made, so you build it once from GNU binutils 2.42 and GCC 13.3.0. <a href="https://github.com/ssimorka/duck-call/blob/main/tools/build-bfin-toolchain.sh">build-bfin-toolchain.sh</a> does it with the same options Duck Call's compiler used. It takes 30 to 60 minutes, and about 35 on a Raspberry Pi 5.</p>
+      <p class="note">On a Mac, do it in a Linux VM or container. You need <code>texinfo</code> as well as the usual build tools, and the script tells you if anything is missing. If a build step stops halfway, run the script again and it picks up where it left off.</p></div>
+    <pre class="code"><span class="c"># the tools it needs (Debian, Ubuntu, Raspberry Pi OS)</span>
+sudo apt install -y build-essential curl xz-utils bzip2 texinfo
+
+<span class="c"># one script does it all (Linux or a Linux VM)</span>
 duck-call/tools/build-bfin-toolchain.sh
 export PATH=$HOME/bfin/tc/bin:$PATH
 bfin-elf-gcc --version   <span class="c"># bfin-elf-gcc (GCC) 13.3.0</span>
